@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Mesh.h"
 #include <helpers/IdentityStore.h>
 
 struct NodePrefs {  // persisted to file
