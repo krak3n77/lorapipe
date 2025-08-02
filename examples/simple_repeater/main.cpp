@@ -120,15 +120,11 @@ public:
     StrHelper::strncpy(_prefs.node_name, ADVERT_NAME, sizeof(_prefs.node_name));
     _prefs.node_lat = ADVERT_LAT;
     _prefs.node_lon = ADVERT_LON;
-    StrHelper::strncpy(_prefs.password, ADMIN_PASSWORD, sizeof(_prefs.password));
     _prefs.freq = LORA_FREQ;
     _prefs.sf = LORA_SF;
     _prefs.bw = LORA_BW;
     _prefs.cr = LORA_CR;
     _prefs.tx_power_dbm = LORA_TX_POWER;
-    _prefs.advert_interval = 1;  // default to 2 minutes for NEW installs
-    _prefs.flood_advert_interval = 3;   // 3 hours
-    _prefs.flood_max = 64;
     _prefs.interference_threshold = 0;  // disabled
   }
 
@@ -152,7 +148,7 @@ public:
     _cli.savePrefs(_fs);
   }
 
-    bool formatFileSystem() override {
+  bool formatFileSystem() override {
 #if defined(NRF52_PLATFORM) || defined(STM32_PLATFORM)
     return InternalFS.format();
 #elif defined(RP2040_PLATFORM)

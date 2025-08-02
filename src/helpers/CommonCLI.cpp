@@ -32,32 +32,25 @@ void CommonCLI::loadPrefsInt(FILESYSTEM* fs, const char* filename) {
   if (file) {
     uint8_t pad[8];
 
-    file.read((uint8_t *) &_prefs->airtime_factor, sizeof(_prefs->airtime_factor));  // 0
-    file.read((uint8_t *) &_prefs->node_name, sizeof(_prefs->node_name));  // 4
-    file.read(pad, 4);   // 36
-    file.read((uint8_t *) &_prefs->node_lat, sizeof(_prefs->node_lat));  // 40
-    file.read((uint8_t *) &_prefs->node_lon, sizeof(_prefs->node_lon));  // 48
-    file.read((uint8_t *) &_prefs->password[0], sizeof(_prefs->password));  // 56
-    file.read((uint8_t *) &_prefs->freq, sizeof(_prefs->freq));   // 72
-    file.read((uint8_t *) &_prefs->tx_power_dbm, sizeof(_prefs->tx_power_dbm));  // 76
-    file.read((uint8_t *) &_prefs->disable_fwd, sizeof(_prefs->disable_fwd));  // 77
-    file.read((uint8_t *) &_prefs->advert_interval, sizeof(_prefs->advert_interval));  // 78
-    file.read((uint8_t *) pad, 1);  // 79  was 'unused'
-    file.read((uint8_t *) &_prefs->rx_delay_base, sizeof(_prefs->rx_delay_base));  // 80
-    file.read((uint8_t *) &_prefs->tx_delay_factor, sizeof(_prefs->tx_delay_factor));  // 84
-    file.read((uint8_t *) &_prefs->guest_password[0], sizeof(_prefs->guest_password));  // 88
-    file.read((uint8_t *) &_prefs->direct_tx_delay_factor, sizeof(_prefs->direct_tx_delay_factor));  // 104
-    file.read(pad, 4);   // 108
-    file.read((uint8_t *) &_prefs->sf, sizeof(_prefs->sf));  // 112
-    file.read((uint8_t *) &_prefs->cr, sizeof(_prefs->cr));  // 113
-    file.read((uint8_t *) &_prefs->allow_read_only, sizeof(_prefs->allow_read_only));  // 114
-    file.read((uint8_t *) &_prefs->multi_acks, sizeof(_prefs->multi_acks));  // 115
-    file.read((uint8_t *) &_prefs->bw, sizeof(_prefs->bw));  // 116
-    file.read((uint8_t *) &_prefs->agc_reset_interval, sizeof(_prefs->agc_reset_interval));  // 120
-    file.read(pad, 3);   // 121
-    file.read((uint8_t *) &_prefs->flood_max, sizeof(_prefs->flood_max));   // 124
-    file.read((uint8_t *) &_prefs->flood_advert_interval, sizeof(_prefs->flood_advert_interval));  // 125
-    file.read((uint8_t *) &_prefs->interference_threshold, sizeof(_prefs->interference_threshold));  // 126
+    file.read((uint8_t *) &_prefs->airtime_factor, sizeof(_prefs->airtime_factor));
+    file.read((uint8_t *) &_prefs->node_name, sizeof(_prefs->node_name));
+    file.read(pad, 4);
+    file.read((uint8_t *) &_prefs->node_lat, sizeof(_prefs->node_lat));
+    file.read((uint8_t *) &_prefs->node_lon, sizeof(_prefs->node_lon));
+    file.read((uint8_t *) &_prefs->freq, sizeof(_prefs->freq));
+    file.read((uint8_t *) &_prefs->tx_power_dbm, sizeof(_prefs->tx_power_dbm));
+    file.read((uint8_t *) pad, 1);
+    file.read((uint8_t *) &_prefs->rx_delay_base, sizeof(_prefs->rx_delay_base));
+    file.read((uint8_t *) &_prefs->tx_delay_factor, sizeof(_prefs->tx_delay_factor));
+    file.read((uint8_t *) &_prefs->direct_tx_delay_factor, sizeof(_prefs->direct_tx_delay_factor));
+    file.read(pad, 4);
+    file.read((uint8_t *) &_prefs->sf, sizeof(_prefs->sf));
+    file.read((uint8_t *) &_prefs->cr, sizeof(_prefs->cr));
+    file.read((uint8_t *) &_prefs->allow_read_only, sizeof(_prefs->allow_read_only));
+    file.read((uint8_t *) &_prefs->bw, sizeof(_prefs->bw));
+    file.read((uint8_t *) &_prefs->agc_reset_interval, sizeof(_prefs->agc_reset_interval));
+    file.read(pad, 3);
+    file.read((uint8_t *) &_prefs->interference_threshold, sizeof(_prefs->interference_threshold));
 
     // sanitise bad pref values
     _prefs->rx_delay_base = constrain(_prefs->rx_delay_base, 0, 20.0f);
@@ -69,7 +62,6 @@ void CommonCLI::loadPrefsInt(FILESYSTEM* fs, const char* filename) {
     _prefs->sf = constrain(_prefs->sf, 7, 12);
     _prefs->cr = constrain(_prefs->cr, 5, 8);
     _prefs->tx_power_dbm = constrain(_prefs->tx_power_dbm, 1, 30);
-    _prefs->multi_acks = constrain(_prefs->multi_acks, 0, 1);
 
     file.close();
   }
@@ -88,32 +80,25 @@ void CommonCLI::savePrefs(FILESYSTEM* fs) {
     uint8_t pad[8];
     memset(pad, 0, sizeof(pad));
 
-    file.write((uint8_t *) &_prefs->airtime_factor, sizeof(_prefs->airtime_factor));  // 0
-    file.write((uint8_t *) &_prefs->node_name, sizeof(_prefs->node_name));  // 4
-    file.write(pad, 4);   // 36
-    file.write((uint8_t *) &_prefs->node_lat, sizeof(_prefs->node_lat));  // 40
-    file.write((uint8_t *) &_prefs->node_lon, sizeof(_prefs->node_lon));  // 48
-    file.write((uint8_t *) &_prefs->password[0], sizeof(_prefs->password));  // 56
-    file.write((uint8_t *) &_prefs->freq, sizeof(_prefs->freq));   // 72
-    file.write((uint8_t *) &_prefs->tx_power_dbm, sizeof(_prefs->tx_power_dbm));  // 76
-    file.write((uint8_t *) &_prefs->disable_fwd, sizeof(_prefs->disable_fwd));  // 77
-    file.write((uint8_t *) &_prefs->advert_interval, sizeof(_prefs->advert_interval));  // 78
-    file.write((uint8_t *) pad, 1);  // 79  was 'unused'
-    file.write((uint8_t *) &_prefs->rx_delay_base, sizeof(_prefs->rx_delay_base));  // 80
-    file.write((uint8_t *) &_prefs->tx_delay_factor, sizeof(_prefs->tx_delay_factor));  // 84
-    file.write((uint8_t *) &_prefs->guest_password[0], sizeof(_prefs->guest_password));  // 88
-    file.write((uint8_t *) &_prefs->direct_tx_delay_factor, sizeof(_prefs->direct_tx_delay_factor));  // 104
-    file.write(pad, 4);   // 108
-    file.write((uint8_t *) &_prefs->sf, sizeof(_prefs->sf));  // 112
-    file.write((uint8_t *) &_prefs->cr, sizeof(_prefs->cr));  // 113
-    file.write((uint8_t *) &_prefs->allow_read_only, sizeof(_prefs->allow_read_only));  // 114
-    file.write((uint8_t *) &_prefs->multi_acks, sizeof(_prefs->multi_acks));  // 115
-    file.write((uint8_t *) &_prefs->bw, sizeof(_prefs->bw));  // 116
-    file.write((uint8_t *) &_prefs->agc_reset_interval, sizeof(_prefs->agc_reset_interval));  // 120
-    file.write(pad, 3);   // 121
-    file.write((uint8_t *) &_prefs->flood_max, sizeof(_prefs->flood_max));   // 124
-    file.write((uint8_t *) &_prefs->flood_advert_interval, sizeof(_prefs->flood_advert_interval));  // 125
-    file.write((uint8_t *) &_prefs->interference_threshold, sizeof(_prefs->interference_threshold));  // 126
+    file.write((uint8_t *) &_prefs->airtime_factor, sizeof(_prefs->airtime_factor));
+    file.write((uint8_t *) &_prefs->node_name, sizeof(_prefs->node_name));
+    file.write(pad, 4);
+    file.write((uint8_t *) &_prefs->node_lat, sizeof(_prefs->node_lat));
+    file.write((uint8_t *) &_prefs->node_lon, sizeof(_prefs->node_lon));
+    file.write((uint8_t *) &_prefs->freq, sizeof(_prefs->freq));
+    file.write((uint8_t *) &_prefs->tx_power_dbm, sizeof(_prefs->tx_power_dbm));
+    file.write((uint8_t *) pad, 1);
+    file.write((uint8_t *) &_prefs->rx_delay_base, sizeof(_prefs->rx_delay_base));
+    file.write((uint8_t *) &_prefs->tx_delay_factor, sizeof(_prefs->tx_delay_factor));
+    file.write((uint8_t *) &_prefs->direct_tx_delay_factor, sizeof(_prefs->direct_tx_delay_factor));
+    file.write(pad, 4);
+    file.write((uint8_t *) &_prefs->sf, sizeof(_prefs->sf));
+    file.write((uint8_t *) &_prefs->cr, sizeof(_prefs->cr));
+    file.write((uint8_t *) &_prefs->allow_read_only, sizeof(_prefs->allow_read_only));
+    file.write((uint8_t *) &_prefs->bw, sizeof(_prefs->bw));
+    file.write((uint8_t *) &_prefs->agc_reset_interval, sizeof(_prefs->agc_reset_interval));
+    file.write(pad, 3);
+    file.write((uint8_t *) &_prefs->interference_threshold, sizeof(_prefs->interference_threshold));
 
     file.close();
   }
@@ -122,9 +107,6 @@ void CommonCLI::savePrefs(FILESYSTEM* fs) {
 #define MIN_LOCAL_ADVERT_INTERVAL   60
 
 void CommonCLI::savePrefs() {
-  if (_prefs->advert_interval * 2 < MIN_LOCAL_ADVERT_INTERVAL) {
-    _prefs->advert_interval = 0;  // turn it off, now that device has been manually configured
-  }
   _callbacks->savePrefs();
 }
 
@@ -175,11 +157,6 @@ void CommonCLI::handleCommand(uint32_t sender_timestamp, const char* command, ch
       } else {
         strcpy(reply, "Error, invalid params");
       }
-    } else if (memcmp(command, "password ", 9) == 0) {
-      // change admin password
-      StrHelper::strncpy(_prefs->password, &command[9], sizeof(_prefs->password));
-      savePrefs();
-      sprintf(reply, "password now: %s", _prefs->password);   // echo back just to let admin know for sure!!
     } else if (memcmp(command, "clear stats", 11) == 0) {
       _callbacks->clearStats();
       strcpy(reply, "(OK - stats reset)");
@@ -191,20 +168,10 @@ void CommonCLI::handleCommand(uint32_t sender_timestamp, const char* command, ch
         sprintf(reply, "> %d", (uint32_t) _prefs->interference_threshold);
       } else if (memcmp(config, "agc.reset.interval", 18) == 0) {
         sprintf(reply, "> %d", ((uint32_t) _prefs->agc_reset_interval) * 4);
-      } else if (memcmp(config, "multi.acks", 10) == 0) {
-        sprintf(reply, "> %d", (uint32_t) _prefs->multi_acks);
       } else if (memcmp(config, "allow.read.only", 15) == 0) {
         sprintf(reply, "> %s", _prefs->allow_read_only ? "on" : "off");
-      } else if (memcmp(config, "flood.advert.interval", 21) == 0) {
-        sprintf(reply, "> %d", ((uint32_t) _prefs->flood_advert_interval));
-      } else if (memcmp(config, "advert.interval", 15) == 0) {
-        sprintf(reply, "> %d", ((uint32_t) _prefs->advert_interval) * 2);
-      } else if (memcmp(config, "guest.password", 14) == 0) {
-        sprintf(reply, "> %s", _prefs->guest_password);
       } else if (memcmp(config, "name", 4) == 0) {
         sprintf(reply, "> %s", _prefs->node_name);
-      } else if (memcmp(config, "repeat", 6) == 0) {
-        sprintf(reply, "> %s", _prefs->disable_fwd ? "off" : "on");
       } else if (memcmp(config, "lat", 3) == 0) {
         sprintf(reply, "> %s", StrHelper::ftoa(_prefs->node_lat));
       } else if (memcmp(config, "lon", 3) == 0) {
@@ -218,8 +185,6 @@ void CommonCLI::handleCommand(uint32_t sender_timestamp, const char* command, ch
         sprintf(reply, "> %s", StrHelper::ftoa(_prefs->rx_delay_base));
       } else if (memcmp(config, "txdelay", 7) == 0) {
         sprintf(reply, "> %s", StrHelper::ftoa(_prefs->tx_delay_factor));
-      } else if (memcmp(config, "flood.max", 9) == 0) {
-        sprintf(reply, "> %d", (uint32_t)_prefs->flood_max);
       } else if (memcmp(config, "direct.txdelay", 14) == 0) {
         sprintf(reply, "> %s", StrHelper::ftoa(_prefs->direct_tx_delay_factor));
       } else if (memcmp(config, "tx", 2) == 0 && (config[2] == 0 || config[2] == ' ')) {
@@ -245,26 +210,14 @@ void CommonCLI::handleCommand(uint32_t sender_timestamp, const char* command, ch
         _prefs->agc_reset_interval = atoi(&config[19]) / 4;
         savePrefs();
         strcpy(reply, "OK");
-      } else if (memcmp(config, "multi.acks ", 11) == 0) {
-        _prefs->multi_acks = atoi(&config[11]);
-        savePrefs();
-        strcpy(reply, "OK");
       } else if (memcmp(config, "allow.read.only ", 16) == 0) {
         _prefs->allow_read_only = memcmp(&config[16], "on", 2) == 0;
-        savePrefs();
-        strcpy(reply, "OK");
-      } else if (memcmp(config, "guest.password ", 15) == 0) {
-        StrHelper::strncpy(_prefs->guest_password, &config[15], sizeof(_prefs->guest_password));
         savePrefs();
         strcpy(reply, "OK");
       } else if (memcmp(config, "name ", 5) == 0) {
         StrHelper::strncpy(_prefs->node_name, &config[5], sizeof(_prefs->node_name));
         savePrefs();
         strcpy(reply, "OK");
-      } else if (memcmp(config, "repeat ", 7) == 0) {
-        _prefs->disable_fwd = memcmp(&config[7], "off", 3) == 0;
-        savePrefs();
-        strcpy(reply, _prefs->disable_fwd ? "OK - repeat is now OFF" : "OK - repeat is now ON");
       } else if (memcmp(config, "radio ", 6) == 0) {
         strcpy(tmp, &config[6]);
         const char *parts[4];
@@ -308,15 +261,6 @@ void CommonCLI::handleCommand(uint32_t sender_timestamp, const char* command, ch
           strcpy(reply, "OK");
         } else {
           strcpy(reply, "Error, cannot be negative");
-        }
-      } else if (memcmp(config, "flood.max ", 10) == 0) {
-        uint8_t m = atoi(&config[10]);
-        if (m <= 64) {
-          _prefs->flood_max = m;
-          savePrefs();
-          strcpy(reply, "OK");
-        } else {
-          strcpy(reply, "Error, max 64");
         }
       } else if (memcmp(config, "direct.txdelay ", 15) == 0) {
         float f = atof(&config[15]);
