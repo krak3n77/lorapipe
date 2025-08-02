@@ -1,5 +1,6 @@
 #include <Arduino.h>   // needed for PlatformIO
 #include <Dispatcher.h>
+#include <Mesh.h>
 
 #if defined(NRF52_PLATFORM) || defined(STM32_PLATFORM)
   #include <InternalFileSystem.h>
@@ -19,11 +20,11 @@
 /* ------------------------------ Config -------------------------------- */
 
 #ifndef FIRMWARE_BUILD_DATE
-  #define FIRMWARE_BUILD_DATE   "24 Jul 2025"
+  #define FIRMWARE_BUILD_DATE   "1 Aug 2025"
 #endif
 
 #ifndef FIRMWARE_VERSION
-  #define FIRMWARE_VERSION   "v1.7.4"
+  #define FIRMWARE_VERSION   "v1"
 #endif
 
 #ifndef LORA_FREQ
@@ -42,20 +43,6 @@
   #define LORA_TX_POWER  20
 #endif
 
-#ifndef ADVERT_NAME
-  #define  ADVERT_NAME   "repeater"
-#endif
-#ifndef ADVERT_LAT
-  #define  ADVERT_LAT  0.0
-#endif
-#ifndef ADVERT_LON
-  #define  ADVERT_LON  0.0
-#endif
-
-#ifndef ADMIN_PASSWORD
-  #define  ADMIN_PASSWORD  "password"
-#endif
-
 #ifndef SERVER_RESPONSE_DELAY
   #define SERVER_RESPONSE_DELAY   300
 #endif
@@ -64,12 +51,7 @@
   #define TXT_ACK_DELAY     200
 #endif
 
-#ifdef DISPLAY_CLASS
-  #include "UITask.h"
-  static UITask ui_task(display);
-#endif
-
-#define FIRMWARE_ROLE "repeater"
+#define FIRMWARE_ROLE "kisstnc"
 
 #define PACKET_LOG_FILE  "/packet_log"
 
@@ -84,7 +66,7 @@
 
 #define CLI_REPLY_DELAY_MILLIS  600
 
-class MyMesh : public mesh::Dispatcher {
+class MyMesh : public mesh::Mesh {
   bool _logging;
   NodePrefs _prefs;
   uint8_t reply_data[MAX_PACKET_PAYLOAD];
@@ -121,7 +103,7 @@ protected:
 
 public:
   MyMesh(mesh::MainBoard& board, mesh::Radio& radio, mesh::MillisecondClock& ms, mesh::RNG& rng, mesh::RTCClock& rtc)
-     : mesh::Dispatcher(radio, ms, *new StaticPoolPacketManager(32))
+     : mesh::Mesh(radio, ms, *new StaticPoolPacketManager(32))
   {
     set_radio_at = revert_radio_at = 0;
     _logging = false;

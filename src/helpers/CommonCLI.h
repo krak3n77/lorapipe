@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Mesh.h>
+
 #if defined(ESP32) || defined(RP2040_PLATFORM)
   #include <FS.h>
   #define FILESYSTEM  fs::FS
