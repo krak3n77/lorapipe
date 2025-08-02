@@ -42,11 +42,9 @@ void CommonCLI::loadPrefsInt(FILESYSTEM* fs, const char* filename) {
     file.read((uint8_t *) pad, 1);
     file.read((uint8_t *) &_prefs->rx_delay_base, sizeof(_prefs->rx_delay_base));
     file.read((uint8_t *) &_prefs->tx_delay_factor, sizeof(_prefs->tx_delay_factor));
-    file.read((uint8_t *) &_prefs->direct_tx_delay_factor, sizeof(_prefs->direct_tx_delay_factor));
     file.read(pad, 4);
     file.read((uint8_t *) &_prefs->sf, sizeof(_prefs->sf));
     file.read((uint8_t *) &_prefs->cr, sizeof(_prefs->cr));
-    file.read((uint8_t *) &_prefs->allow_read_only, sizeof(_prefs->allow_read_only));
     file.read((uint8_t *) &_prefs->bw, sizeof(_prefs->bw));
     file.read((uint8_t *) &_prefs->agc_reset_interval, sizeof(_prefs->agc_reset_interval));
     file.read(pad, 3);
@@ -55,7 +53,6 @@ void CommonCLI::loadPrefsInt(FILESYSTEM* fs, const char* filename) {
     // sanitise bad pref values
     _prefs->rx_delay_base = constrain(_prefs->rx_delay_base, 0, 20.0f);
     _prefs->tx_delay_factor = constrain(_prefs->tx_delay_factor, 0, 2.0f);
-    _prefs->direct_tx_delay_factor = constrain(_prefs->direct_tx_delay_factor, 0, 2.0f);
     _prefs->airtime_factor = constrain(_prefs->airtime_factor, 0, 9.0f);
     _prefs->freq = constrain(_prefs->freq, 400.0f, 2500.0f);
     _prefs->bw = constrain(_prefs->bw, 62.5f, 500.0f);
@@ -90,11 +87,9 @@ void CommonCLI::savePrefs(FILESYSTEM* fs) {
     file.write((uint8_t *) pad, 1);
     file.write((uint8_t *) &_prefs->rx_delay_base, sizeof(_prefs->rx_delay_base));
     file.write((uint8_t *) &_prefs->tx_delay_factor, sizeof(_prefs->tx_delay_factor));
-    file.write((uint8_t *) &_prefs->direct_tx_delay_factor, sizeof(_prefs->direct_tx_delay_factor));
     file.write(pad, 4);
     file.write((uint8_t *) &_prefs->sf, sizeof(_prefs->sf));
     file.write((uint8_t *) &_prefs->cr, sizeof(_prefs->cr));
-    file.write((uint8_t *) &_prefs->allow_read_only, sizeof(_prefs->allow_read_only));
     file.write((uint8_t *) &_prefs->bw, sizeof(_prefs->bw));
     file.write((uint8_t *) &_prefs->agc_reset_interval, sizeof(_prefs->agc_reset_interval));
     file.write(pad, 3);
@@ -168,8 +163,6 @@ void CommonCLI::handleCommand(uint32_t sender_timestamp, const char* command, ch
         sprintf(reply, "> %d", (uint32_t) _prefs->interference_threshold);
       } else if (memcmp(config, "agc.reset.interval", 18) == 0) {
         sprintf(reply, "> %d", ((uint32_t) _prefs->agc_reset_interval) * 4);
-      } else if (memcmp(config, "allow.read.only", 15) == 0) {
-        sprintf(reply, "> %s", _prefs->allow_read_only ? "on" : "off");
       } else if (memcmp(config, "name", 4) == 0) {
         sprintf(reply, "> %s", _prefs->node_name);
       } else if (memcmp(config, "lat", 3) == 0) {
@@ -185,14 +178,10 @@ void CommonCLI::handleCommand(uint32_t sender_timestamp, const char* command, ch
         sprintf(reply, "> %s", StrHelper::ftoa(_prefs->rx_delay_base));
       } else if (memcmp(config, "txdelay", 7) == 0) {
         sprintf(reply, "> %s", StrHelper::ftoa(_prefs->tx_delay_factor));
-      } else if (memcmp(config, "direct.txdelay", 14) == 0) {
-        sprintf(reply, "> %s", StrHelper::ftoa(_prefs->direct_tx_delay_factor));
       } else if (memcmp(config, "tx", 2) == 0 && (config[2] == 0 || config[2] == ' ')) {
         sprintf(reply, "> %d", (uint32_t) _prefs->tx_power_dbm);
       } else if (memcmp(config, "freq", 4) == 0) {
         sprintf(reply, "> %s", StrHelper::ftoa(_prefs->freq));
-      } else if (memcmp(config, "role", 4) == 0) {
-        sprintf(reply, "> %s", _callbacks->getRole());
       } else {
         sprintf(reply, "??: %s", config);
       }
@@ -208,10 +197,6 @@ void CommonCLI::handleCommand(uint32_t sender_timestamp, const char* command, ch
         strcpy(reply, "OK");
       } else if (memcmp(config, "agc.reset.interval ", 19) == 0) {
         _prefs->agc_reset_interval = atoi(&config[19]) / 4;
-        savePrefs();
-        strcpy(reply, "OK");
-      } else if (memcmp(config, "allow.read.only ", 16) == 0) {
-        _prefs->allow_read_only = memcmp(&config[16], "on", 2) == 0;
         savePrefs();
         strcpy(reply, "OK");
       } else if (memcmp(config, "name ", 5) == 0) {
@@ -257,15 +242,6 @@ void CommonCLI::handleCommand(uint32_t sender_timestamp, const char* command, ch
         float f = atof(&config[8]);
         if (f >= 0) {
           _prefs->tx_delay_factor = f;
-          savePrefs();
-          strcpy(reply, "OK");
-        } else {
-          strcpy(reply, "Error, cannot be negative");
-        }
-      } else if (memcmp(config, "direct.txdelay ", 15) == 0) {
-        float f = atof(&config[15]);
-        if (f >= 0) {
-          _prefs->direct_tx_delay_factor = f;
           savePrefs();
           strcpy(reply, "OK");
         } else {

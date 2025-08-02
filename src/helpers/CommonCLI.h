@@ -20,11 +20,9 @@ struct NodePrefs {  // persisted to file
     uint8_t tx_power_dbm;
     float rx_delay_base;
     float tx_delay_factor;
-    float direct_tx_delay_factor;
     uint32_t guard;
     uint8_t sf;
     uint8_t cr;
-    uint8_t allow_read_only;
     float bw;
     uint8_t interference_threshold;
     uint8_t agc_reset_interval;   // secs / 4
@@ -35,7 +33,6 @@ public:
   virtual void savePrefs() = 0;
   virtual const char* getFirmwareVer() = 0;
   virtual const char* getBuildDate() = 0;
-  virtual const char* getRole() = 0;
   virtual bool formatFileSystem() = 0;
   virtual void setLoggingOn(bool enable) = 0;
   virtual void eraseLogFile() = 0;
