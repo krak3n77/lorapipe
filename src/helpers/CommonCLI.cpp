@@ -200,6 +200,8 @@ void CommonCLI::handleCommand(uint32_t sender_timestamp, const char* command, ch
         savePrefs();
         strcpy(reply, "OK");
       } else if (memcmp(config, "name ", 5) == 0) {
+        sprintf(reply, "AEIOUOUOUOUOUOUOUOU");
+        sprintf(reply, "AEIOUOUOUOUOUOUOUOU");
         StrHelper::strncpy(_prefs->node_name, &config[5], sizeof(_prefs->node_name));
         savePrefs();
         strcpy(reply, "OK");

@@ -128,8 +128,10 @@ public:
     _prefs.interference_threshold = 0;  // disabled
   }
 
-  void begin() {
-    mesh::Dispatcher::begin();
+  void begin(FILESYSTEM* fs) {
+    mesh::Mesh::begin();
+    _fs = fs;
+    _cli.loadPrefs(_fs);
 
     radio_set_params(_prefs.freq, _prefs.bw, _prefs.sf, _prefs.cr);
     radio_set_tx_power(_prefs.tx_power_dbm);
@@ -252,9 +254,26 @@ void setup() {
 
   fast_rng.begin(radio_get_rng_seed());
 
+  FILESYSTEM* fs;
+#if defined(NRF52_PLATFORM) || defined(STM32_PLATFORM)
+  InternalFS.begin();
+  fs = &InternalFS;
+  IdentityStore store(InternalFS, "");
+#elif defined(ESP32)
+  SPIFFS.begin(true);
+  fs = &SPIFFS;
+#elif defined(RP2040_PLATFORM)
+  LittleFS.begin();
+  fs = &LittleFS;
+  IdentityStore store(LittleFS, "/identity");
+  store.begin();
+#else
+  #error "need to define filesystem"
+#endif
+
   command[0] = 0;
 
-  the_mesh.begin();
+  the_mesh.begin(fs);
 }
 
 void loop() {
