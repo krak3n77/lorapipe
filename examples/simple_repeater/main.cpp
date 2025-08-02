@@ -66,7 +66,10 @@
 
 #define CLI_REPLY_DELAY_MILLIS  600
 
-class MyMesh : public mesh::Mesh {
+class MyMesh : public mesh::Mesh, public CommonCLICallbacks {
+
+  FILESYSTEM* _fs;
+  CommonCLI _cli;
   bool _logging;
   NodePrefs _prefs;
   uint8_t reply_data[MAX_PACKET_PAYLOAD];
@@ -103,7 +106,7 @@ protected:
 
 public:
   MyMesh(mesh::MainBoard& board, mesh::Radio& radio, mesh::MillisecondClock& ms, mesh::RNG& rng, mesh::RTCClock& rtc)
-     : mesh::Mesh(radio, ms, *new StaticPoolPacketManager(32))
+     : mesh::Mesh(radio, ms, *new StaticPoolPacketManager(32)), _cli(board, rtc, &_prefs, this)
   {
     set_radio_at = revert_radio_at = 0;
     _logging = false;
@@ -137,9 +140,29 @@ public:
 
   }
 
+  const char* getFirmwareVer() override { return FIRMWARE_VERSION; }
+  const char* getBuildDate() override { return FIRMWARE_BUILD_DATE; }
+  const char* getRole() override { return FIRMWARE_ROLE; }
   const char* getNodeName() { return _prefs.node_name; }
   NodePrefs* getNodePrefs() { 
     return &_prefs; 
+  }
+
+  void savePrefs() override {
+    _cli.savePrefs(_fs);
+  }
+
+    bool formatFileSystem() override {
+#if defined(NRF52_PLATFORM) || defined(STM32_PLATFORM)
+    return InternalFS.format();
+#elif defined(RP2040_PLATFORM)
+    return LittleFS.format();
+#elif defined(ESP32)
+    return SPIFFS.format();
+#else
+    #error "need to implement file system erase"
+    return false;
+#endif
   }
 
 
@@ -155,10 +178,30 @@ public:
 
   void setLoggingOn(bool enable) { _logging = enable; }
 
+  void eraseLogFile() override {
+    _fs->remove(PACKET_LOG_FILE);
+  }
+
+  void dumpLogFile() override {
+#if defined(RP2040_PLATFORM)
+    File f = _fs->open(PACKET_LOG_FILE, "r");
+#else
+    File f = _fs->open(PACKET_LOG_FILE);
+#endif
+    if (f) {
+      while (f.available()) {
+        int c = f.read();
+        if (c < 0) break;
+        Serial.print((char)c);
+      }
+      f.close();
+    }
+  }
+
+
   void setTxPower(uint8_t power_dbm) {
     radio_set_tx_power(power_dbm);
   }
-
 
   void clearStats() {
     radio_driver.resetStats();
@@ -174,7 +217,7 @@ public:
       command += 3;
     }
 
-    //_cli.handleCommand(sender_timestamp, command, reply);  // common CLI commands
+    _cli.handleCommand(sender_timestamp, command, reply);  // common CLI commands
   }
 
   void loop() {
