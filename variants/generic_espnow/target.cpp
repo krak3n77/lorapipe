@@ -7,7 +7,6 @@ ESP32Board board;
 ESPNOWRadio radio_driver;
 
 ESP32RTCClock rtc_clock;
-SensorManager sensors;
 
 bool radio_init() {
   rtc_clock.begin();
@@ -37,8 +36,3 @@ public:
     esp_fill_random(dest, sz);
   }
 };
-
-mesh::LocalIdentity radio_new_identity() {
-  ESP_RNG rng;
-  return mesh::LocalIdentity(&rng);  // create new random identity
-}

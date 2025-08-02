@@ -8,7 +8,6 @@ WRAPPER_CLASS radio_driver(radio, board);
 
 ESP32RTCClock fallback_clock;
 AutoDiscoverRTCClock rtc_clock(fallback_clock);
-SensorManager sensors;
 
 bool radio_init() {
   fallback_clock.begin();
@@ -29,9 +28,4 @@ void radio_set_params(float freq, float bw, uint8_t sf, uint8_t cr) {
 
 void radio_set_tx_power(uint8_t dbm) {
   radio.setOutputPower(dbm);
-}
-
-mesh::LocalIdentity radio_new_identity() {
-  RadioNoiseListener rng(radio);
-  return mesh::LocalIdentity(&rng);  // create new random identity
 }

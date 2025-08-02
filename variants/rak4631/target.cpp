@@ -4,24 +4,12 @@
 
 RAK4631Board board;
 
-#ifdef DISPLAY_CLASS
-  DISPLAY_CLASS display;
-#endif
-
 RADIO_CLASS radio = new Module(P_LORA_NSS, P_LORA_DIO_1, P_LORA_RESET, P_LORA_BUSY, SPI);
 
 WRAPPER_CLASS radio_driver(radio, board);
 
 VolatileRTCClock fallback_clock;
 AutoDiscoverRTCClock rtc_clock(fallback_clock);
-
-#if ENV_INCLUDE_GPS
-  #include <helpers/sensors/MicroNMEALocationProvider.h>
-  MicroNMEALocationProvider nmea = MicroNMEALocationProvider(Serial1);
-  EnvironmentSensorManager sensors = EnvironmentSensorManager(nmea);
-#else
-  EnvironmentSensorManager sensors;
-#endif
 
 bool radio_init() {
   rtc_clock.begin(Wire);
@@ -41,9 +29,4 @@ void radio_set_params(float freq, float bw, uint8_t sf, uint8_t cr) {
 
 void radio_set_tx_power(uint8_t dbm) {
   radio.setOutputPower(dbm);
-}
-
-mesh::LocalIdentity radio_new_identity() {
-  RadioNoiseListener rng(radio);
-  return mesh::LocalIdentity(&rng);  // create new random identity
 }

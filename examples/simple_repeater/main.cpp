@@ -11,9 +11,6 @@
 
 #include <helpers/ArduinoHelpers.h>
 #include <helpers/StaticPoolPacketManager.h>
-#include <helpers/SimpleMeshTables.h>
-#include <helpers/IdentityStore.h>
-#include <helpers/AdvertDataHelpers.h>
 #include <helpers/TxtDataHelpers.h>
 #include <helpers/CommonCLI.h>
 #include <RTClib.h>
@@ -123,7 +120,7 @@ protected:
 
 
 public:
-  MyMesh(mesh::MainBoard& board, mesh::Radio& radio, mesh::MillisecondClock& ms, mesh::RNG& rng, mesh::RTCClock& rtc, mesh::MeshTables& tables)
+  MyMesh(mesh::MainBoard& board, mesh::Radio& radio, mesh::MillisecondClock& ms, mesh::RNG& rng, mesh::RTCClock& rtc)
      : mesh::Dispatcher(radio, ms, *new StaticPoolPacketManager(32))
   {
     set_radio_at = revert_radio_at = 0;
@@ -216,9 +213,8 @@ public:
 };
 
 StdRNG fast_rng;
-SimpleMeshTables tables;
 
-MyMesh the_mesh(board, radio_driver, *new ArduinoMillis(), fast_rng, rtc_clock, tables);
+MyMesh the_mesh(board, radio_driver, *new ArduinoMillis(), fast_rng, rtc_clock);
 
 void halt() {
   while (1) ;
@@ -237,8 +233,6 @@ void setup() {
   fast_rng.begin(radio_get_rng_seed());
 
   command[0] = 0;
-
-  sensors.begin();
 
   the_mesh.begin();
 }
