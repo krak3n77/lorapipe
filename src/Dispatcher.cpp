@@ -139,21 +139,10 @@ void Dispatcher::checkRecv() {
   if (pkt) {
     #if MESH_PACKET_LOGGING
     Serial.print(getLogDateTime());
-    Serial.printf(": RX, len=%d (type=%d, route=%s, payload_len=%d) SNR=%d RSSI=%d score=%d", 
-            pkt->getRawLength(), pkt->getPayloadType(), pkt->isRouteDirect() ? "D" : "F", pkt->payload_len,
+    Serial.printf(": RX, len=%d payload_len=%d SNR=%d RSSI=%d score=%d", 
+            pkt->getRawLength(), pkt->payload_len,
             (int)pkt->getSNR(), (int)_radio->getLastRSSI(), (int)(score*1000));
-
-    static uint8_t packet_hash[MAX_HASH_SIZE];
-    pkt->calculatePacketHash(packet_hash);
-    Serial.print(" hash=");
-    mesh::Utils::printHex(Serial, packet_hash, MAX_HASH_SIZE);
-
-    if (pkt->getPayloadType() == PAYLOAD_TYPE_PATH || pkt->getPayloadType() == PAYLOAD_TYPE_REQ
-        || pkt->getPayloadType() == PAYLOAD_TYPE_RESPONSE || pkt->getPayloadType() == PAYLOAD_TYPE_TXT_MSG) {
-      Serial.printf(" [%02X -> %02X]\n", (uint32_t)pkt->payload[1], (uint32_t)pkt->payload[0]);
-    } else {
-      Serial.printf("\n");
-    }
+    Serial.printf("\n");
     #endif
     logRx(pkt, pkt->getRawLength(), score);   // hook for custom logging
 
@@ -226,14 +215,8 @@ void Dispatcher::checkSend() {
 
     #if MESH_PACKET_LOGGING
       Serial.print(getLogDateTime());
-      Serial.printf(": TX, len=%d (type=%d, route=%s, payload_len=%d)", 
-            len, outbound->getPayloadType(), outbound->isRouteDirect() ? "D" : "F", outbound->payload_len);
-      if (outbound->getPayloadType() == PAYLOAD_TYPE_PATH || outbound->getPayloadType() == PAYLOAD_TYPE_REQ
-        || outbound->getPayloadType() == PAYLOAD_TYPE_RESPONSE || outbound->getPayloadType() == PAYLOAD_TYPE_TXT_MSG) {
-        Serial.printf(" [%02X -> %02X]\n", (uint32_t)outbound->payload[1], (uint32_t)outbound->payload[0]);
-      } else {
-        Serial.printf("\n");
-      }
+      Serial.printf(": TX, len=%d payload_len=%d", len, outbound->payload_len);
+      Serial.printf("\n");
     #endif
     }
   }
@@ -256,7 +239,7 @@ void Dispatcher::releasePacket(Packet* packet) {
 
 void Dispatcher::sendPacket(Packet* packet, uint8_t priority, uint32_t delay_millis) {
   if (packet->payload_len > MAX_PACKET_PAYLOAD) {
-    MESH_DEBUG_PRINTLN("%s Dispatcher::sendPacket(): ERROR: invalid packet... path_len=%d, payload_len=%d", getLogDateTime(), (uint32_t) packet->path_len, (uint32_t) packet->payload_len);
+    MESH_DEBUG_PRINTLN("%s Dispatcher::sendPacket(): ERROR: invalid packet... payload_len=%d", getLogDateTime(), (uint32_t) packet->payload_len);
     _mgr->free(packet);
   } else {
     _mgr->queueOutbound(packet, priority, futureMillis(delay_millis));

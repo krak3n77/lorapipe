@@ -264,7 +264,6 @@ void setup() {
 #elif defined(RP2040_PLATFORM)
   LittleFS.begin();
   fs = &LittleFS;
-  store.begin();
 #else
   #error "need to define filesystem"
 #endif
