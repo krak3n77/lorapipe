@@ -5,7 +5,6 @@
 #include <helpers/radiolib/RadioLibWrappers.h>
 #include <helpers/radiolib/CustomLR1110Wrapper.h>
 #include <helpers/ArduinoHelpers.h>
-#include <helpers/sensors/LocationProvider.h>
 
 extern MinewsemiME25LS01Board board;
 extern WRAPPER_CLASS radio_driver;

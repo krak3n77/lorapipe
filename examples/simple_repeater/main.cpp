@@ -258,14 +258,12 @@ void setup() {
 #if defined(NRF52_PLATFORM) || defined(STM32_PLATFORM)
   InternalFS.begin();
   fs = &InternalFS;
-  IdentityStore store(InternalFS, "");
 #elif defined(ESP32)
   SPIFFS.begin(true);
   fs = &SPIFFS;
 #elif defined(RP2040_PLATFORM)
   LittleFS.begin();
   fs = &LittleFS;
-  IdentityStore store(LittleFS, "/identity");
   store.begin();
 #else
   #error "need to define filesystem"
