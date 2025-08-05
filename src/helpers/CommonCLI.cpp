@@ -108,6 +108,26 @@ void CommonCLI::savePrefs() {
 void CommonCLI::handleCommand(uint32_t sender_timestamp, const char* command, char* reply) {
     if (memcmp(command, "reboot", 6) == 0) {
       _board->reboot();  // doesn't return
+    } if(memcmp(command, "txraw", 5) == 0) {
+      //
+      const char* tx_hex = &command[6];
+
+      mesh::Packet* pkt = _mesh->obtainNewPacket();
+      uint8_t tx_buf[MAX_PACKET_PAYLOAD];
+      uint8_t len_buf;
+      char tmp[3];
+      for(int i=0;i<strlen(tx_hex);i+2) {
+        if (tx_hex[i] == '\n' || tx_hex[i] == ' ') {
+          break;
+        }
+        tmp[0] = tx_hex[i];
+        tmp[1] = tx_hex[i+1];
+        tx_buf[len_buf] = strtol(tmp,NULL,16);
+        len_buf++;
+      }
+      pkt->readFrom(tx_buf, len_buf);
+      _mesh->sendPacket(pkt, 1);
+      strcpy(reply, "OK");
     } else if (memcmp(command, "clock sync", 10) == 0) {
       uint32_t curr = getRTCClock()->getCurrentTime();
       if (sender_timestamp > curr) {

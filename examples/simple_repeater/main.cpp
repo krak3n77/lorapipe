@@ -106,7 +106,7 @@ protected:
 
 public:
   MyMesh(mesh::MainBoard& board, mesh::Radio& radio, mesh::MillisecondClock& ms, mesh::RNG& rng, mesh::RTCClock& rtc)
-     : mesh::Mesh(radio, ms, *new StaticPoolPacketManager(32)), _cli(board, rtc, &_prefs, this)
+     : mesh::Mesh(radio, ms, *new StaticPoolPacketManager(32)), _cli(board, rtc, &_prefs, this, this)
   {
     set_radio_at = revert_radio_at = 0;
     _logging = false;
@@ -143,6 +143,9 @@ public:
   const char* getNodeName() { return _prefs.node_name; }
   NodePrefs* getNodePrefs() { 
     return &_prefs; 
+  }
+  CommonCLI* getCLI() {
+    return &_cli;
   }
 
   void savePrefs() override {
