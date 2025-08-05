@@ -114,7 +114,7 @@ void CommonCLI::handleCommand(uint32_t sender_timestamp, const char* command, ch
 
       mesh::Packet* pkt = _mesh->obtainNewPacket();
       uint8_t tx_buf[MAX_PACKET_PAYLOAD];
-      uint8_t len_buf;
+      uint8_t len_buf = 0;
       char tmp[3];
       for(int i = 0; i < strlen(tx_hex); i + 2) {
         if (tx_hex[i] == '\n' || tx_hex[i] == ' ') {
