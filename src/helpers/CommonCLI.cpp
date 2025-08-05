@@ -109,14 +109,13 @@ void CommonCLI::handleCommand(uint32_t sender_timestamp, const char* command, ch
     if (memcmp(command, "reboot", 6) == 0) {
       _board->reboot();  // doesn't return
     } else if (memcmp(command, "txraw ", 6) == 0) {
-      //
       const char* tx_hex = &command[6];
 
       mesh::Packet* pkt = _mesh->obtainNewPacket();
       uint8_t tx_buf[MAX_PACKET_PAYLOAD];
       uint8_t len_buf = 0;
       char tmp[3];
-      for (int i = 0; i < strlen(tx_hex); i + 2) {
+      for (int i = 0; i < strlen(tx_hex); i+= 2) {
         if (tx_hex[i] == '\n' || tx_hex[i] == ' ') {
           break;
         }
@@ -127,7 +126,7 @@ void CommonCLI::handleCommand(uint32_t sender_timestamp, const char* command, ch
       }
       pkt->readFrom(tx_buf, len_buf);
       mesh::Utils::printHex(Serial, tx_buf, len_buf);
-      //_mesh->sendPacket(pkt, 1);
+      _mesh->sendPacket(pkt, 1);
       strcpy(reply, "OK");
     } else if (memcmp(command, "clock sync", 10) == 0) {
       uint32_t curr = getRTCClock()->getCurrentTime();
@@ -221,8 +220,6 @@ void CommonCLI::handleCommand(uint32_t sender_timestamp, const char* command, ch
         savePrefs();
         strcpy(reply, "OK");
       } else if (memcmp(config, "name ", 5) == 0) {
-        sprintf(reply, "AEIOUOUOUOUOUOUOUOU");
-        sprintf(reply, "AEIOUOUOUOUOUOUOUOU");
         StrHelper::strncpy(_prefs->node_name, &config[5], sizeof(_prefs->node_name));
         savePrefs();
         strcpy(reply, "OK");
