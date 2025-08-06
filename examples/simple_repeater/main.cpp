@@ -66,6 +66,8 @@
 
 #define CLI_REPLY_DELAY_MILLIS  600
 
+#define COMMAND_BUFFER 500
+
 class MyMesh : public mesh::Mesh, public CommonCLICallbacks {
 
   FILESYSTEM* _fs;
@@ -245,7 +247,7 @@ void halt() {
   while (1) ;
 }
 
-static char command[500];
+static char command[COMMAND_BUFFER];
 
 void setup() {
   Serial.begin(115200);
