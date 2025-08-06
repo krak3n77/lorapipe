@@ -245,7 +245,7 @@ void halt() {
   while (1) ;
 }
 
-static char command[80];
+static char command[500];
 
 void setup() {
   Serial.begin(115200);
