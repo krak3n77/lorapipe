@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Dispatcher.h>
-#include <Meshcore.h>
+#include <MeshCore.h>
 
 
 

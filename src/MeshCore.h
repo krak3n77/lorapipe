@@ -15,7 +15,7 @@
 #define CIPHER_MAC_SIZE      2
 #define PATH_HASH_SIZE       1
 
-#define MAX_PACKET_PAYLOAD  184
+#define MAX_PACKET_PAYLOAD  300
 #define MAX_PATH_SIZE        64
 #define MAX_TRANS_UNIT      255
 

@@ -45,6 +45,7 @@ public:
 class CommonCLI {
   mesh::RTCClock* _rtc;
   NodePrefs* _prefs;
+  mesh::Mesh* _mesh;
   CommonCLICallbacks* _callbacks;
   mesh::MainBoard* _board;
   char tmp[80];
@@ -54,8 +55,8 @@ class CommonCLI {
   void loadPrefsInt(FILESYSTEM* _fs, const char* filename);
 
 public:
-  CommonCLI(mesh::MainBoard& board, mesh::RTCClock& rtc, NodePrefs* prefs, CommonCLICallbacks* callbacks)
-      : _board(&board), _rtc(&rtc), _prefs(prefs), _callbacks(callbacks) { }
+  CommonCLI(mesh::MainBoard& board, mesh::RTCClock& rtc, NodePrefs* prefs, CommonCLICallbacks* callbacks, mesh::Mesh* mesh)
+      : _board(&board), _rtc(&rtc), _prefs(prefs), _callbacks(callbacks), _mesh(mesh) { }
 
   void loadPrefs(FILESYSTEM* _fs);
   void savePrefs(FILESYSTEM* _fs);

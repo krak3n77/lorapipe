@@ -106,7 +106,7 @@ protected:
 
 public:
   MyMesh(mesh::MainBoard& board, mesh::Radio& radio, mesh::MillisecondClock& ms, mesh::RNG& rng, mesh::RTCClock& rtc)
-     : mesh::Mesh(radio, ms, *new StaticPoolPacketManager(32)), _cli(board, rtc, &_prefs, this)
+     : mesh::Mesh(radio, ms, *new StaticPoolPacketManager(32)), _cli(board, rtc, &_prefs, this, this)
   {
     set_radio_at = revert_radio_at = 0;
     _logging = false;
@@ -133,7 +133,7 @@ public:
     _fs = fs;
     _cli.loadPrefs(_fs);
 
-    radio_set_params(_prefs.freq, _prefs.bw, _prefs.sf, _prefs.cr);
+    radio_set_params(_prefs.freq, _prefs.bw, _prefs.sf, _prefs.cr, 0x2B);
     radio_set_tx_power(_prefs.tx_power_dbm);
 
   }
@@ -143,6 +143,9 @@ public:
   const char* getNodeName() { return _prefs.node_name; }
   NodePrefs* getNodePrefs() { 
     return &_prefs; 
+  }
+  CommonCLI* getCLI() {
+    return &_cli;
   }
 
   void savePrefs() override {
@@ -222,13 +225,13 @@ public:
 
     if (set_radio_at && millisHasNowPassed(set_radio_at)) {   // apply pending (temporary) radio params
       set_radio_at = 0;  // clear timer
-      radio_set_params(pending_freq, pending_bw, pending_sf, pending_cr);
+      radio_set_params(pending_freq, pending_bw, pending_sf, pending_cr, 0x2b);
       MESH_DEBUG_PRINTLN("Temp radio params");
     }
 
     if (revert_radio_at && millisHasNowPassed(revert_radio_at)) {   // revert radio params to orig
       revert_radio_at = 0;  // clear timer
-      radio_set_params(_prefs.freq, _prefs.bw, _prefs.sf, _prefs.cr);
+      radio_set_params(_prefs.freq, _prefs.bw, _prefs.sf, _prefs.cr, 0x2b);
       MESH_DEBUG_PRINTLN("Radio params restored");
     }
   }
