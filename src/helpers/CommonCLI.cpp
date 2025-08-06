@@ -205,6 +205,8 @@ void CommonCLI::handleCommand(uint32_t sender_timestamp, const char* command, ch
         sprintf(reply, "> %d", (uint32_t) _prefs->tx_power_dbm);
       } else if (memcmp(config, "freq", 4) == 0) {
         sprintf(reply, "> %s", StrHelper::ftoa(_prefs->freq));
+      } else if (memcmp(config, "syncword", 8) == 0) {
+        sprintf(reply, "> %s", StrHelper::ftoa(_prefs->sync_word));
       } else {
         sprintf(reply, "??: %s", config);
       }
