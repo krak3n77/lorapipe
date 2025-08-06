@@ -80,6 +80,7 @@ class MyMesh : public mesh::Mesh, public CommonCLICallbacks {
   float pending_bw;
   uint8_t pending_sf;
   uint8_t pending_cr;
+  uint8_t pending_sync_word;
 
 protected:
   float getAirtimeBudgetFactor() const override {
@@ -130,6 +131,7 @@ public:
     _prefs.cr = LORA_CR;
     _prefs.tx_power_dbm = LORA_TX_POWER;
     _prefs.interference_threshold = 0;  // disabled
+    _prefs.sync_word = 0x2B;
     _prefs.log_rx = true;
   }
 
@@ -138,7 +140,7 @@ public:
     _fs = fs;
     _cli.loadPrefs(_fs);
 
-    radio_set_params(_prefs.freq, _prefs.bw, _prefs.sf, _prefs.cr, 0x2B);
+    radio_set_params(_prefs.freq, _prefs.bw, _prefs.sf, _prefs.cr, _prefs.sync_word);
     radio_set_tx_power(_prefs.tx_power_dbm);
 
   }
@@ -171,12 +173,13 @@ public:
   }
 
 
-  void applyTempRadioParams(float freq, float bw, uint8_t sf, uint8_t cr, int timeout_mins) {
+  void applyTempRadioParams(float freq, float bw, uint8_t sf, uint8_t cr, uint8_t sync_word, int timeout_mins) {
     set_radio_at = futureMillis(2000);   // give CLI reply some time to be sent back, before applying temp radio params
     pending_freq = freq;
     pending_bw = bw;
     pending_sf = sf;
     pending_cr = cr;
+    pending_sync_word = sync_word;
 
     revert_radio_at = futureMillis(2000 + timeout_mins*60*1000);   // schedule when to revert radio params
   }
@@ -230,13 +233,13 @@ public:
 
     if (set_radio_at && millisHasNowPassed(set_radio_at)) {   // apply pending (temporary) radio params
       set_radio_at = 0;  // clear timer
-      radio_set_params(pending_freq, pending_bw, pending_sf, pending_cr, 0x2b);
+      radio_set_params(pending_freq, pending_bw, pending_sf, pending_cr, pending_sync_word);
       MESH_DEBUG_PRINTLN("Temp radio params");
     }
 
     if (revert_radio_at && millisHasNowPassed(revert_radio_at)) {   // revert radio params to orig
       revert_radio_at = 0;  // clear timer
-      radio_set_params(_prefs.freq, _prefs.bw, _prefs.sf, _prefs.cr, 0x2b);
+      radio_set_params(_prefs.freq, _prefs.bw, _prefs.sf, _prefs.cr, _prefs.sync_word);
       MESH_DEBUG_PRINTLN("Radio params restored");
     }
   }

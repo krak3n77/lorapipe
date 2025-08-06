@@ -49,6 +49,7 @@ void CommonCLI::loadPrefsInt(FILESYSTEM* fs, const char* filename) {
     file.read((uint8_t *) &_prefs->agc_reset_interval, sizeof(_prefs->agc_reset_interval));
     file.read(pad, 3);
     file.read((uint8_t *) &_prefs->interference_threshold, sizeof(_prefs->interference_threshold));
+    file.read((uint8_t *) &_prefs->sync_word, sizeof(_prefs->sync_word));
 
     // sanitise bad pref values
     _prefs->rx_delay_base = constrain(_prefs->rx_delay_base, 0, 20.0f);
@@ -94,6 +95,7 @@ void CommonCLI::savePrefs(FILESYSTEM* fs) {
     file.write((uint8_t *) &_prefs->agc_reset_interval, sizeof(_prefs->agc_reset_interval));
     file.write(pad, 3);
     file.write((uint8_t *) &_prefs->interference_threshold, sizeof(_prefs->interference_threshold));
+    file.write((uint8_t *) &_prefs->sync_word, sizeof(_prefs->sync_word));
 
     file.close();
   }
@@ -160,14 +162,15 @@ void CommonCLI::handleCommand(uint32_t sender_timestamp, const char* command, ch
     } else if (memcmp(command, "tempradio ", 10) == 0) {
       strcpy(tmp, &command[10]);
       const char *parts[5];
-      int num = mesh::Utils::parseTextParts(tmp, parts, 5);
+      int num = mesh::Utils::parseTextParts(tmp, parts, 6);
       float freq  = num > 0 ? atof(parts[0]) : 0.0f;
       float bw    = num > 1 ? atof(parts[1]) : 0.0f;
       uint8_t sf  = num > 2 ? atoi(parts[2]) : 0;
       uint8_t cr  = num > 3 ? atoi(parts[3]) : 0;
-      int temp_timeout_mins  = num > 4 ? atoi(parts[4]) : 0;
+      uint8_t sync_word  = num > 4 ? atoi(parts[4]) : 0;
+      int temp_timeout_mins  = num > 5 ? atoi(parts[5]) : 0;
       if (freq >= 300.0f && freq <= 2500.0f && sf >= 7 && sf <= 12 && cr >= 5 && cr <= 8 && bw >= 7.0f && bw <= 500.0f && temp_timeout_mins > 0) {
-        _callbacks->applyTempRadioParams(freq, bw, sf, cr, temp_timeout_mins);
+        _callbacks->applyTempRadioParams(freq, bw, sf, cr, sync_word, temp_timeout_mins);
         sprintf(reply, "OK - temp params for %d mins", temp_timeout_mins);
       } else {
         strcpy(reply, "Error, invalid params");
@@ -225,17 +228,19 @@ void CommonCLI::handleCommand(uint32_t sender_timestamp, const char* command, ch
         strcpy(reply, "OK");
       } else if (memcmp(config, "radio ", 6) == 0) {
         strcpy(tmp, &config[6]);
-        const char *parts[4];
-        int num = mesh::Utils::parseTextParts(tmp, parts, 4);
+        const char *parts[5];
+        int num = mesh::Utils::parseTextParts(tmp, parts, 5);
         float freq  = num > 0 ? atof(parts[0]) : 0.0f;
         float bw    = num > 1 ? atof(parts[1]) : 0.0f;
         uint8_t sf  = num > 2 ? atoi(parts[2]) : 0;
         uint8_t cr  = num > 3 ? atoi(parts[3]) : 0;
+        uint8_t sync_word  = num > 4 ? atoi(parts[4]) : 0;
         if (freq >= 300.0f && freq <= 2500.0f && sf >= 7 && sf <= 12 && cr >= 5 && cr <= 8 && bw >= 7.0f && bw <= 500.0f) {
           _prefs->sf = sf;
           _prefs->cr = cr;
           _prefs->freq = freq;
           _prefs->bw = bw;
+          _prefs->sync_word = sync_word;
           _callbacks->savePrefs();
           strcpy(reply, "OK - reboot to apply");
         } else {

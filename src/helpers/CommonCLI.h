@@ -26,6 +26,7 @@ struct NodePrefs {  // persisted to file
     float bw;
     uint8_t interference_threshold;
     uint8_t agc_reset_interval;   // secs / 4
+    uint8_t sync_word;
     bool log_rx;
 };
 
@@ -40,7 +41,7 @@ public:
   virtual void dumpLogFile() = 0;
   virtual void setTxPower(uint8_t power_dbm) = 0;
   virtual void clearStats() = 0;
-  virtual void applyTempRadioParams(float freq, float bw, uint8_t sf, uint8_t cr, int timeout_mins) = 0;
+  virtual void applyTempRadioParams(float freq, float bw, uint8_t sf, uint8_t cr, uint8_t sync_word, int timeout_mins) = 0;
 };
 
 class CommonCLI {
