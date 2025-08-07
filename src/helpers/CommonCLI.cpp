@@ -293,6 +293,12 @@ void CommonCLI::handleCommand(uint32_t sender_timestamp, const char* command, ch
     } else if (memcmp(command, "log erase", 9) == 0) {
       _callbacks->eraseLogFile();
       strcpy(reply, "   log erased");
+    } else if (memcmp(command, "rxlog on", 8) == 0) {
+      _prefs->log_rx = true;
+      strcpy(reply, "   rxlog on");
+    } else if (memcmp(command, "rxlog off", 9) == 0) {
+      _prefs->log_rx = false;
+      strcpy(reply, "   rxlog off");
     } else if (sender_timestamp == 0 && memcmp(command, "log", 3) == 0) {
       _callbacks->dumpLogFile();
       strcpy(reply, "   EOF");
