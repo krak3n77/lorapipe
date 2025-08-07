@@ -17,21 +17,18 @@ For developers;
 - Install [PlatformIO](https://docs.platformio.org) in [Visual Studio Code](https://code.visualstudio.com).
 - Clone and open the lorapipe repository in Visual Studio Code.
 - See the example applications you can modify and run:
-  - [Simple Repeater](./examples/simple_repeater) - Extends network coverage by relaying messages.
+  - [Simple Repeater](./examples/simple_repeater)
 
-## ⚡️ MeshCore Flasher
+## ⚡️Flashing
 
-We have prebuilt firmware ready to flash on supported devices.
+We haven't built a flashing tool yet. You can flash builds using the OEM provided flashing tools or using the developer instructions to flash using VS Code.
 
-- Launch https://flasher.meshcore.co.uk
-- Select a supported device
 - Flash using your platform's OEM flashing tool
-- Once flashing is complete, you can connect with one of the MeshCore clients below.
 
 
 ## 🛠 Hardware Compatibility
 
-lorapipe is designed for devices listed in the [MeshCore Flasher](https://flasher.meshcore.co.uk)
+lorapipe is designed for devices supported by MeshCore so check their support list in the [MeshCore Flasher](https://flasher.meshcore.co.uk). We support all the same hardware.
 
 ## 📜 License
 
