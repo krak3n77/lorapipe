@@ -196,7 +196,7 @@ void CommonCLI::handleCommand(uint32_t sender_timestamp, const char* command, ch
         char freq[16], bw[16];
         strcpy(freq, StrHelper::ftoa(_prefs->freq));
         strcpy(bw, StrHelper::ftoa(_prefs->bw));
-        sprintf(reply, "> %s,%s,%d,%d,%d", freq, bw, (uint32_t)_prefs->sf, (uint32_t)_prefs->cr, (uint32_t)_prefs->sync_word);
+        sprintf(reply, "> %s,%s,%d,%d,0x%x", freq, bw, (uint32_t)_prefs->sf, (uint32_t)_prefs->cr, (uint32_t)_prefs->sync_word);
       } else if (memcmp(config, "rxdelay", 7) == 0) {
         sprintf(reply, "> %s", StrHelper::ftoa(_prefs->rx_delay_base));
       } else if (memcmp(config, "txdelay", 7) == 0) {
@@ -206,7 +206,7 @@ void CommonCLI::handleCommand(uint32_t sender_timestamp, const char* command, ch
       } else if (memcmp(config, "freq", 4) == 0) {
         sprintf(reply, "> %s", StrHelper::ftoa(_prefs->freq));
       } else if (memcmp(config, "syncword", 8) == 0) {
-        sprintf(reply, "> %d", (uint32_t)_prefs->sync_word);
+        sprintf(reply, "> 0x%x", (uint32_t)_prefs->sync_word);
       } else {
         sprintf(reply, "??: %s", config);
       }
