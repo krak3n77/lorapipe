@@ -184,6 +184,10 @@ public:
     revert_radio_at = futureMillis(2000 + timeout_mins*60*1000);   // schedule when to revert radio params
   }
 
+  void applyRadioParams(float freq, float bw, uint8_t sf, uint8_t cr, uint8_t sync_word) {
+    radio_set_params(freq, bw, sf, cr, sync_word);
+  }
+
   void setLoggingOn(bool enable) { _logging = enable; }
 
   void eraseLogFile() override {
