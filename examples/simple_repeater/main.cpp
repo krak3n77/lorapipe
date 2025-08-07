@@ -91,9 +91,7 @@ protected:
     if (!_prefs.log_rx)
       return;
     char timestamp[16];
-    uint32_t now = getRTCClock()->getCurrentTime();
-    DateTime dt = DateTime(now);
-    sprintf(timestamp, "%z", dt.unixtime());
+    sprintf(timestamp, "%z", getRTCClock()->getCurrentTime());
     Serial.print(timestamp);
     char msgbuf[32];
     int buflen = sprintf(msgbuf, " RSSI: %f SNR: %f", rssi, snr);
