@@ -90,12 +90,8 @@ protected:
   void logRxRaw(float snr, float rssi, const uint8_t raw[], int len) override {
     if (!_prefs.log_rx)
       return;
-    char timestamp[16];
-    sprintf(timestamp, "%z", getRTCClock()->getCurrentTime());
-    Serial.print(timestamp);
-    char msgbuf[32];
-    int buflen = sprintf(msgbuf, " RSSI: %f SNR: %f", rssi, snr);
-    Serial.print(msgbuf);
+    Serial.printf("%lu", getRTCClock()->getCurrentTime());
+    Serial.printf(" RSSI: %f SNR: %f", rssi, snr);
     Serial.print(" RAW: ");
     mesh::Utils::printHex(Serial, raw, len);
     Serial.println();
