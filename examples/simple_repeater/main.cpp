@@ -92,7 +92,7 @@ protected:
       return;
     CommonCLI* cli = getCLI();
     Serial.printf("%lu", rtc_clock.getCurrentTime());
-    Serial.printf(" RSSI: %f SNR: %f", rssi, snr);
+    Serial.printf(" RSSI: %.2f SNR: %.2f", rssi, snr);
     Serial.print(" RAW: ");
     mesh::Utils::printHex(Serial, raw, len);
     Serial.println();
