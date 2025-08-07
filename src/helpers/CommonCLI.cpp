@@ -244,7 +244,8 @@ void CommonCLI::handleCommand(uint32_t sender_timestamp, const char* command, ch
           _prefs->bw = bw;
           _prefs->sync_word = sync_word;
           _callbacks->savePrefs();
-          strcpy(reply, "OK - reboot to apply");
+          _callbacks->applyRadioParams(freq, bw, sf, cr, sync_word);
+          strcpy(reply, "OK");
         } else {
           strcpy(reply, "Error, invalid radio params");
         }
