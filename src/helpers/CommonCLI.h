@@ -26,6 +26,7 @@ struct NodePrefs {  // persisted to file
     float bw;
     uint8_t interference_threshold;
     uint8_t agc_reset_interval;   // secs / 4
+    bool log_rx;
 };
 
 class CommonCLICallbacks {

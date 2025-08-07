@@ -87,6 +87,8 @@ protected:
   }
 
   void logRxRaw(float snr, float rssi, const uint8_t raw[], int len) override {
+    if (!_prefs.log_rx)
+      return;
     Serial.print(getLogDateTime());
     Serial.print(" RAW: ");
     mesh::Utils::printHex(Serial, raw, len);
@@ -128,6 +130,7 @@ public:
     _prefs.cr = LORA_CR;
     _prefs.tx_power_dbm = LORA_TX_POWER;
     _prefs.interference_threshold = 0;  // disabled
+    _prefs.log_rx = true;
   }
 
   void begin(FILESYSTEM* fs) {
