@@ -87,10 +87,22 @@ protected:
     return _prefs.airtime_factor;
   }
 
+  const char* getLogDateTime() override {
+    char timestamp[16];
+    uint32_t now = getRTCClock()->getCurrentTime();
+    DateTime dt = DateTime(now);
+    sprintf(timestamp, "%z", dt.unixtime());
+    return timestamp;
+  }
+
+
   void logRxRaw(float snr, float rssi, const uint8_t raw[], int len) override {
     if (!_prefs.log_rx)
       return;
     Serial.print(getLogDateTime());
+    char msgbuf[32];
+    int buflen = sprintf(msgbuf, " RSSI: %f SNR: %f", rssi, snr);
+    Serial.print(msgbuf);
     Serial.print(" RAW: ");
     mesh::Utils::printHex(Serial, raw, len);
     Serial.println();
