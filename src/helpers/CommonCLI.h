@@ -12,6 +12,8 @@
   using namespace Adafruit_LittleFS_Namespace;
 #endif
 
+enum CLIMode { CLI, KISS };
+
 struct NodePrefs {  // persisted to file
     float airtime_factor;
     char node_name[32];
@@ -52,10 +54,13 @@ class CommonCLI {
   CommonCLICallbacks* _callbacks;
   mesh::MainBoard* _board;
   char tmp[80];
+  CLIMode _cli_mode = CLIMode::CLI;
 
   mesh::RTCClock* getRTCClock() { return _rtc; }
   void savePrefs();
   void loadPrefsInt(FILESYSTEM* _fs, const char* filename);
+  void handleCLICommand(uint32_t sender_timestamp, const char* command, char* reply);
+  void handleKISSCommand(uint32_t sender_timestamp, const char* command, char* reply);
 
 public:
   CommonCLI(mesh::MainBoard& board, mesh::RTCClock& rtc, NodePrefs* prefs, CommonCLICallbacks* callbacks, mesh::Mesh* mesh)
