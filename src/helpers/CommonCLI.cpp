@@ -50,6 +50,7 @@ void CommonCLI::loadPrefsInt(FILESYSTEM* fs, const char* filename) {
     file.read(pad, 3);
     file.read((uint8_t *) &_prefs->interference_threshold, sizeof(_prefs->interference_threshold));
     file.read((uint8_t *) &_prefs->sync_word, sizeof(_prefs->sync_word));
+    file.read((uint8_t *) &_prefs->kiss_port, sizeof(_prefs->kiss_port));
 
     // sanitise bad pref values
     _prefs->rx_delay_base = constrain(_prefs->rx_delay_base, 0, 20.0f);
@@ -60,6 +61,7 @@ void CommonCLI::loadPrefsInt(FILESYSTEM* fs, const char* filename) {
     _prefs->sf = constrain(_prefs->sf, 7, 12);
     _prefs->cr = constrain(_prefs->cr, 5, 8);
     _prefs->tx_power_dbm = constrain(_prefs->tx_power_dbm, 1, 30);
+    _prefs->kiss_port = constrain(_prefs->kiss_port, 0, 15);
 
     file.close();
   }
@@ -96,6 +98,7 @@ void CommonCLI::savePrefs(FILESYSTEM* fs) {
     file.write(pad, 3);
     file.write((uint8_t *) &_prefs->interference_threshold, sizeof(_prefs->interference_threshold));
     file.write((uint8_t *) &_prefs->sync_word, sizeof(_prefs->sync_word));
+    file.write((uint8_t *) &_prefs->kiss_port, sizeof(_prefs->kiss_port));
 
     file.close();
   }
@@ -293,6 +296,20 @@ void CommonCLI::handleCLICommand(uint32_t sender_timestamp, const char* command,
       savePrefs();
       _callbacks->setTxPower(_prefs->tx_power_dbm);
       strcpy(reply, "OK");
+    } else if (memcmp(config, "kiss ", 5) == 0) {
+      const char* kiss_config = &config[5];
+      if (memcmp(kiss_config, "port ", 5) == 0) {
+        uint8_t kiss_port = atoi(&kiss_config[5]);
+        if (kiss_port < 16) {
+          _prefs->kiss_port = kiss_port;
+          savePrefs();
+          strcpy(reply, "OK");
+        } else {
+          sprintf(reply, "KISS port must be between 0 and 15, invalid value: %d", kiss_port);
+        }
+      } else {
+        sprintf(reply, "unknown kiss config: %s", kiss_config);
+      }
     } else if (sender_timestamp == 0 && memcmp(config, "freq ", 5) == 0) {
       _prefs->freq = atof(&config[5]);
       savePrefs();
@@ -328,6 +345,20 @@ void CommonCLI::handleCLICommand(uint32_t sender_timestamp, const char* command,
   }
 }
 
+#define FEND 0xC0
+#define FESC 0xDB
+#define TFEND 0xDC
+#define TFESC 0xDD
+
 void CommonCLI::handleKISSCommand(uint32_t sender_timestamp, const char* command, char* reply) {
+  uint8_t instr_byte = static_cast<uint8_t>(command[0]);
+  
+  uint8_t port = (instr_byte & 0xF0) >> 4;
+  uint8_t cmd = instr_byte & 0x0F;
+
+  // we actually need to do something with FEND here
+  if (port == _prefs->kiss_port) {
+
+  }
 
 }

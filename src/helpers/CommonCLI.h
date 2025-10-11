@@ -30,6 +30,8 @@ struct NodePrefs {  // persisted to file
     uint8_t agc_reset_interval;   // secs / 4
     uint8_t sync_word;
     bool log_rx;
+    // KISS Config
+    uint8_t kiss_port;
 };
 
 class CommonCLICallbacks {
