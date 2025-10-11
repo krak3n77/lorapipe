@@ -118,6 +118,11 @@ void CommonCLI::handleCommand(uint32_t sender_timestamp, const char* command, ch
 void CommonCLI::handleCLICommand(uint32_t sender_timestamp, const char* command, char* reply) {
   if (memcmp(command, "reboot", 6) == 0) {
     _board->reboot();  // doesn't return
+  } else if (memcmp(command, "serial mode ", 12) == 0) {
+    const char* mode = &command[12];
+    if (memcmp(command, "kiss", 4) == 0) {
+      _cli_mode = CLIMode::KISS;
+    }
   } else if (memcmp(command, "txraw ", 6) == 0) {
     const char* tx_hex = &command[6];
 
