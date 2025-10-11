@@ -3,6 +3,64 @@
 #include "TxtDataHelpers.h"
 #include <RTClib.h>
 
+// KISS Definitions
+#define FEND 0xC0
+#define FESC 0xDB
+#define TFEND 0xDC
+#define TFESC 0xDD
+
+void CommonCLI::setup() {
+  command[0] = 0;
+  reply[0] = 0;
+}
+
+void CommonCLI::handleSerialData() {
+  if (_cli_mode == CLIMode::CLI) {
+    this->parseSerialCLI();
+  } else if (_cli_mode == CLIMode::KISS) {
+    this->parseSerialKISS();
+  }
+}
+
+void CommonCLI::parseSerialCLI() {
+  int len = strlen(command);
+
+  while (Serial.available() && len < sizeof(command)-1) {
+    char c = Serial.read();
+    if (c != '\n') {
+      command[len++] = c;
+      command[len] = 0;
+    }
+    Serial.print(c);  // echo read characters back to the serial console
+  }
+  if (len == sizeof(command)-1) {  // command buffer full
+    command[sizeof(command)-1] = '\r';
+  }
+
+  if (len > 0 && command[len - 1] == '\r') {  // received complete line
+    command[len - 1] = 0;  // replace newline with C string null terminator
+    
+    char* cmd = command;
+    char* resp = reply;
+    while (*cmd == ' ') cmd++;   // skip leading spaces
+    if (strlen(cmd) > 4 && cmd[2] == '|') {  // optional prefix (for companion radio CLI)
+      memcpy(resp, cmd, 3);  // reflect the prefix back
+      resp += 3;
+      cmd += 3;
+    }
+    handleCLICommand(0, cmd, resp);  // NOTE: there is no sender_timestamp via serial!
+    if (resp[0]) {
+      Serial.print("  -> "); Serial.println(resp);
+    }
+
+    command[0] = 0;  // reset command buffer
+  }
+}
+
+void CommonCLI::parseSerialKISS() {
+
+}
+
 // Believe it or not, this std C function is busted on some platforms!
 static uint32_t _atoi(const char* sp) {
   uint32_t n = 0;
@@ -108,14 +166,6 @@ void CommonCLI::savePrefs(FILESYSTEM* fs) {
 
 void CommonCLI::savePrefs() {
   _callbacks->savePrefs();
-}
-
-void CommonCLI::handleCommand(uint32_t sender_timestamp, const char* command, char* reply) {
-  if (_cli_mode == CLIMode::CLI) {
-    this->handleCLICommand(sender_timestamp, command, reply);
-  } else if (_cli_mode == CLIMode::KISS) {
-    this->handleKISSCommand(sender_timestamp, command, reply);
-  }
 }
 
 void CommonCLI::handleCLICommand(uint32_t sender_timestamp, const char* command, char* reply) {
@@ -344,11 +394,6 @@ void CommonCLI::handleCLICommand(uint32_t sender_timestamp, const char* command,
     strcpy(reply, "Unknown command");
   }
 }
-
-#define FEND 0xC0
-#define FESC 0xDB
-#define TFEND 0xDC
-#define TFESC 0xDD
 
 void CommonCLI::handleKISSCommand(uint32_t sender_timestamp, const char* command, char* reply) {
   uint8_t instr_byte = static_cast<uint8_t>(command[0]);

@@ -66,7 +66,6 @@
 
 #define CLI_REPLY_DELAY_MILLIS  600
 
-#define CMD_BUF_LEN_MAX 500
 
 class MyMesh : public mesh::Mesh, public CommonCLICallbacks {
 
@@ -140,6 +139,7 @@ public:
   void begin(FILESYSTEM* fs) {
     mesh::Mesh::begin();
     _fs = fs;
+    _cli.setup();
     _cli.loadPrefs(_fs);
 
     radio_set_params(_prefs.freq, _prefs.bw, _prefs.sf, _prefs.cr, _prefs.sync_word);
@@ -222,16 +222,8 @@ public:
     resetStats();
   }
 
-  void handleCommand(uint32_t sender_timestamp, char* command, char* reply) {
-    while (*command == ' ') command++;   // skip leading spaces
-
-    if (strlen(command) > 4 && command[2] == '|') {  // optional prefix (for companion radio CLI)
-      memcpy(reply, command, 3);  // reflect the prefix back
-      reply += 3;
-      command += 3;
-    }
-
-    _cli.handleCommand(sender_timestamp, command, reply);  // common CLI commands
+  void handleSerialData() {
+    _cli.handleSerialData();
   }
 
   void loop() {
@@ -259,7 +251,6 @@ void halt() {
   while (1) ;
 }
 
-static char command[CMD_BUF_LEN_MAX];
 
 void setup() {
   Serial.begin(115200);
@@ -284,35 +275,12 @@ void setup() {
 #else
   #error "need to define filesystem"
 #endif
-
-  command[0] = 0;
-
   the_mesh.begin(fs);
 }
 
 void loop() {
-  int len = strlen(command);
-  while (Serial.available() && len < sizeof(command)-1) {
-    char c = Serial.read();
-    if (c != '\n') {
-      command[len++] = c;
-      command[len] = 0;
-    }
-    Serial.print(c);
-  }
-  if (len == sizeof(command)-1) {  // command buffer full
-    command[sizeof(command)-1] = '\r';
-  }
-
-  if (len > 0 && command[len - 1] == '\r') {  // received complete line
-    command[len - 1] = 0;  // replace newline with C string null terminator
-    char reply[160];
-    the_mesh.handleCommand(0, command, reply);  // NOTE: there is no sender_timestamp via serial!
-    if (reply[0]) {
-      Serial.print("  -> "); Serial.println(reply);
-    }
-
-    command[0] = 0;  // reset command buffer
+  if (Serial.available()) {
+    the_mesh.handleSerialData();
   }
 
   the_mesh.loop();

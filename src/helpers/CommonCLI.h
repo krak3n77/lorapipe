@@ -12,6 +12,9 @@
   using namespace Adafruit_LittleFS_Namespace;
 #endif
 
+
+#define CMD_BUF_LEN_MAX 500
+
 enum CLIMode { CLI, KISS };
 
 struct NodePrefs {  // persisted to file
@@ -55,12 +58,17 @@ class CommonCLI {
   mesh::Mesh* _mesh;
   CommonCLICallbacks* _callbacks;
   mesh::MainBoard* _board;
-  char tmp[80];
   CLIMode _cli_mode = CLIMode::CLI;
+  char tmp[80];
+  static char command[CMD_BUF_LEN_MAX];
+  char reply[CMD_BUF_LEN_MAX];
+
 
   mesh::RTCClock* getRTCClock() { return _rtc; }
   void savePrefs();
   void loadPrefsInt(FILESYSTEM* _fs, const char* filename);
+  void parseSerialCLI();
+  void parseSerialKISS();
   void handleCLICommand(uint32_t sender_timestamp, const char* command, char* reply);
   void handleKISSCommand(uint32_t sender_timestamp, const char* command, char* reply);
 
@@ -70,5 +78,6 @@ public:
 
   void loadPrefs(FILESYSTEM* _fs);
   void savePrefs(FILESYSTEM* _fs);
-  void handleCommand(uint32_t sender_timestamp, const char* command, char* reply);
+  void handleSerialData();
+  void setup();
 };
