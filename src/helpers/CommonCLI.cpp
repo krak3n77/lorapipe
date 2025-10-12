@@ -147,7 +147,7 @@ void CommonCLI::parseSerialCLI() {
 
     while (*command == ' ') command++;   // skip leading spaces
     handleCLICommand(0, command, resp);  // NOTE: there is no sender_timestamp via serial!
-    if (resp[0]) {
+    if (_cli_mode == CLIMode::CLI && resp[0]) {
       Serial.print("  -> "); Serial.println(resp);
     }
 
@@ -164,8 +164,11 @@ void CommonCLI::handleCLICommand(
     _board->reboot();  // doesn't return
   } else if (memcmp(command, "serial mode ", 12) == 0) {
     const char* mode = &command[12];
-    if (memcmp(command, "kiss", 4) == 0) {
+    if (memcmp(mode, "kiss", 4) == 0) {
+      Serial.println("  -> Entering KISS mode!");
+      _kiss_len = 0;  // reset kiss length
       _cli_mode = CLIMode::KISS;
+      return;
     }
   } else if (memcmp(command, "txraw ", 6) == 0) {
     const char* tx_hex = &command[6];
@@ -498,6 +501,7 @@ void CommonCLI::handleKISSCommand(
       case KISS_CMD_RETURN:
         _cmd[0] = 0; // reset command buffer
         _cli_mode = CLIMode::CLI; // return to CLI mode
+        Serial.println("  -> Exiting KISS mode and returning to CLI mode.");
         break;
       case KISS_CMD_TXDELAY:
         if (kiss_data_len > 0) _kiss_txdelay = atoi(&kiss_data[0]);
@@ -511,5 +515,4 @@ void CommonCLI::handleKISSCommand(
         break;
     }
   }
-
 }

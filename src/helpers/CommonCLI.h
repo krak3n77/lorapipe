@@ -77,10 +77,10 @@ class CommonCLI {
   mesh::MainBoard* _board;
   CLIMode _cli_mode = CLIMode::CLI;
   char _tmp[80];
-  static char _cmd[CMD_BUF_LEN_MAX];
-  static uint16_t _kiss_len;
-  static bool _kiss_esc;
-  static uint32_t _kiss_txdelay;
+  char _cmd[CMD_BUF_LEN_MAX];
+  uint16_t _kiss_len;
+  bool _kiss_esc;
+  uint32_t _kiss_txdelay;
 
   mesh::RTCClock* getRTCClock() { return _rtc; }
   void savePrefs();
