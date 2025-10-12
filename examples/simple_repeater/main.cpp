@@ -143,7 +143,6 @@ public:
 
     radio_set_params(_prefs.freq, _prefs.bw, _prefs.sf, _prefs.cr, _prefs.sync_word);
     radio_set_tx_power(_prefs.tx_power_dbm);
-
   }
 
   const char* getFirmwareVer() override { return FIRMWARE_VERSION; }

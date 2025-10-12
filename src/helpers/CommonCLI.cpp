@@ -312,8 +312,8 @@ void CommonCLI::handleCLICommand(
       if (freq >= 300.0f && freq <= 2500.0f &&
           sf >= 7 && sf <= 12 &&
           cr >= 5 && cr <= 8 &&
-          bw >= 7.0f && bw <= 500.0f)
-      {
+          bw >= 7.0f && bw <= 500.0f
+      ){
         _prefs->sf = sf;
         _prefs->cr = cr;
         _prefs->freq = freq;
@@ -490,7 +490,22 @@ void CommonCLI::handleKISSCommand(
 
   // this KISS data is from the host to our KISS port number
   if (kiss_port == _prefs->kiss_port) {
-
+    switch (kiss_cmd) {
+      case KISS_CMD_RETURN:
+        _cmd[0] = 0; // reset command buffer
+        _cli_mode = CLIMode::CLI; // return to CLI mode
+        break;
+      case KISS_CMD_TXDELAY:
+        if (kiss_data_len > 0) _kiss_txdelay = atoi(&kiss_data[0]);
+        break;
+      case KISS_CMD_DATA:
+        if (kiss_data_len == 0) break;
+        const uint8_t* tx_buf = reinterpret_cast<const uint8_t*>(kiss_data);
+        mesh::Packet* pkt = _mesh->obtainNewPacket();
+        pkt->readFrom(tx_buf, kiss_data_len);
+        _mesh->sendPacket(pkt, 1, _kiss_txdelay);
+        break;
+    }
   }
 
 }
