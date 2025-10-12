@@ -3,16 +3,6 @@
 #include "TxtDataHelpers.h"
 #include <RTClib.h>
 
-// KISS Definitions
-#define FEND 0xC0
-#define FESC 0xDB
-#define TFEND 0xDC
-#define TFESC 0xDD
-
-void CommonCLI::setup() {
-  command[0] = 0;
-}
-
 // Believe it or not, this std C function is busted on some platforms!
 static uint32_t _atoi(const char* sp) {
   uint32_t n = 0;
@@ -391,18 +381,64 @@ void CommonCLI::handleCLICommand(uint32_t sender_timestamp, const char* cmd, cha
   }
 }
 
+// https://en.wikipedia.org/wiki/KISS_(amateur_radio_protocol)
 void CommonCLI::parseSerialKISS() {
-
+  char* cmd = command;
+  while (Serial.available() && _kiss_len < sizeof(command)-1) {
+    uint8_t b = Serial.read();
+    // handle kiss escapes
+    if (b == KISS_FESC) {
+      _kiss_esc = true;
+      continue;
+    } else if (_kiss_esc) {
+      // eat and discard any escaped bytes other than these
+      if (b == KISS_TFEND) { // insert escaped FEND
+        command[_kiss_len++] = KISS_FEND;
+      } else if (b == KISS_TFESC) { // insert escaped FESC
+        command[_kiss_len++] = KISS_FESC;
+      } else if (b == KISS_FESC) { // aborted transmission
+        _kiss_len = 0;
+      }
+      _kiss_esc = false;
+    }
+    // command buffer strips FENDs
+    // increment length and add byte to command buffer if it is not a FEND
+    else if (b != KISS_FEND && b != KISS_FESC) {
+      command[_kiss_len++] = b;
+    }
+    // if current command length is greater than 0 and we encounter an FEND,
+    // handle the whole command buffer as a KISS command, send length, and
+    // then reset length to zero to wait for the next KISS command
+    if (_kiss_len > 0 && b == KISS_FEND) {
+      handleKISSCommand(0, cmd, _kiss_len);
+      _kiss_len = 0;
+      if (_kiss_esc) {
+        // encountered literal FEND while in escape mode, resetting escape mode
+        _kiss_esc = false;
+      }
+    }
+  }
+  if (_kiss_len == sizeof(command)-1) {  // command buffer full
+    // just send the truncated transmission for now
+    // TODO: handle error condition?
+    handleKISSCommand(0, cmd, _kiss_len);
+    _kiss_len = 0;
+  }
 }
 
-void CommonCLI::handleKISSCommand(uint32_t sender_timestamp, const char* cmd, char* resp) {
+void CommonCLI::handleKISSCommand(uint32_t sender_timestamp, const char* cmd, uint16_t len) {
+  if (len == 0) return;
+
   uint8_t instr_byte = static_cast<uint8_t>(cmd[0]);
   
-  uint8_t port = (instr_byte & 0xF0) >> 4;
-  uint8_t cmd = instr_byte & 0x0F;
+  uint8_t kiss_port = (instr_byte & 0xF0) >> 4;
+  uint8_t kiss_cmd = instr_byte & 0x0F;
 
-  // we actually need to do something with FEND here
-  if (port == _prefs->kiss_port) {
+  const char* data = &cmd[1];
+  uint16_t data_len = len-1;
+
+  // this KISS data is from the host to our KISS port number
+  if (kiss_port == _prefs->kiss_port) {
 
   }
 

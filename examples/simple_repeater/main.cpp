@@ -139,7 +139,6 @@ public:
   void begin(FILESYSTEM* fs) {
     mesh::Mesh::begin();
     _fs = fs;
-    _cli.setup();
     _cli.loadPrefs(_fs);
 
     radio_set_params(_prefs.freq, _prefs.bw, _prefs.sf, _prefs.cr, _prefs.sync_word);

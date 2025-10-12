@@ -12,6 +12,11 @@
   using namespace Adafruit_LittleFS_Namespace;
 #endif
 
+// KISS Definitions
+#define KISS_FEND 0xC0
+#define KISS_FESC 0xDB
+#define KISS_TFEND 0xDC
+#define KISS_TFESC 0xDD
 
 #define CMD_BUF_LEN_MAX 500
 
@@ -61,6 +66,8 @@ class CommonCLI {
   CLIMode _cli_mode = CLIMode::CLI;
   char tmp[80];
   static char command[CMD_BUF_LEN_MAX];
+  static uint16_t _kiss_len;
+  static bool _kiss_esc;
 
 
   mesh::RTCClock* getRTCClock() { return _rtc; }
@@ -69,14 +76,17 @@ class CommonCLI {
   void parseSerialCLI();
   void parseSerialKISS();
   void handleCLICommand(uint32_t sender_timestamp, const char* cmd, char* resp);
-  void handleKISSCommand(uint32_t sender_timestamp, const char* cmd, char* resp);
+  void handleKISSCommand(uint32_t sender_timestamp, const char* cmd, uint16_t len);
 
 public:
   CommonCLI(mesh::MainBoard& board, mesh::RTCClock& rtc, NodePrefs* prefs, CommonCLICallbacks* callbacks, mesh::Mesh* mesh)
-      : _board(&board), _rtc(&rtc), _prefs(prefs), _callbacks(callbacks), _mesh(mesh) { }
+      : _board(&board), _rtc(&rtc), _prefs(prefs), _callbacks(callbacks), _mesh(mesh) {
+        command[0] = 0;
+        _kiss_len = 0;
+        _kiss_esc = false;
+      }
 
   void loadPrefs(FILESYSTEM* _fs);
   void savePrefs(FILESYSTEM* _fs);
   void handleSerialData();
-  void setup();
 };
