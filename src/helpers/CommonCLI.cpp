@@ -11,7 +11,6 @@
 
 void CommonCLI::setup() {
   command[0] = 0;
-  reply[0] = 0;
 }
 
 // Believe it or not, this std C function is busted on some platforms!
@@ -148,6 +147,7 @@ void CommonCLI::parseSerialCLI() {
     command[len - 1] = 0;  // replace newline with C string null terminator
     
     char* cmd = command;
+    char reply[CMD_BUF_LEN_MAX];
     char* resp = reply;
     while (*cmd == ' ') cmd++;   // skip leading spaces
     if (strlen(cmd) > 4 && cmd[2] == '|') {  // optional prefix (for companion radio CLI)
@@ -164,16 +164,16 @@ void CommonCLI::parseSerialCLI() {
   }
 }
 
-void CommonCLI::handleCLICommand(uint32_t sender_timestamp, const char* command, char* reply) {
-  if (memcmp(command, "reboot", 6) == 0) {
+void CommonCLI::handleCLICommand(uint32_t sender_timestamp, const char* cmd, char* resp) {
+  if (memcmp(cmd, "reboot", 6) == 0) {
     _board->reboot();  // doesn't return
-  } else if (memcmp(command, "serial mode ", 12) == 0) {
-    const char* mode = &command[12];
-    if (memcmp(command, "kiss", 4) == 0) {
+  } else if (memcmp(cmd, "serial mode ", 12) == 0) {
+    const char* mode = &cmd[12];
+    if (memcmp(cmd, "kiss", 4) == 0) {
       _cli_mode = CLIMode::KISS;
     }
-  } else if (memcmp(command, "txraw ", 6) == 0) {
-    const char* tx_hex = &command[6];
+  } else if (memcmp(cmd, "txraw ", 6) == 0) {
+    const char* tx_hex = &cmd[6];
 
     mesh::Packet* pkt = _mesh->obtainNewPacket();
     uint8_t tx_buf[MAX_PACKET_PAYLOAD];
@@ -191,38 +191,38 @@ void CommonCLI::handleCLICommand(uint32_t sender_timestamp, const char* command,
     pkt->readFrom(tx_buf, len_buf);
     mesh::Utils::printHex(Serial, tx_buf, len_buf);
     _mesh->sendPacket(pkt, 1);
-    strcpy(reply, "OK");
-  } else if (memcmp(command, "clock sync", 10) == 0) {
+    strcpy(resp, "OK");
+  } else if (memcmp(cmd, "clock sync", 10) == 0) {
     uint32_t curr = getRTCClock()->getCurrentTime();
     if (sender_timestamp > curr) {
       getRTCClock()->setCurrentTime(sender_timestamp + 1);
       uint32_t now = getRTCClock()->getCurrentTime();
       DateTime dt = DateTime(now);
-      sprintf(reply, "OK - clock set: %02d:%02d - %d/%d/%d UTC", dt.hour(), dt.minute(), dt.day(), dt.month(), dt.year());
+      sprintf(resp, "OK - clock set: %02d:%02d - %d/%d/%d UTC", dt.hour(), dt.minute(), dt.day(), dt.month(), dt.year());
     } else {
-      strcpy(reply, "ERR: clock cannot go backwards");
+      strcpy(resp, "ERR: clock cannot go backwards");
     }
-  } else if (memcmp(command, "start ota", 9) == 0) {
-    if (!_board->startOTAUpdate(_prefs->node_name, reply)) {
-      strcpy(reply, "Error");
+  } else if (memcmp(cmd, "start ota", 9) == 0) {
+    if (!_board->startOTAUpdate(_prefs->node_name, resp)) {
+      strcpy(resp, "Error");
     }
-  } else if (memcmp(command, "clock", 5) == 0) {
+  } else if (memcmp(cmd, "clock", 5) == 0) {
     uint32_t now = getRTCClock()->getCurrentTime();
     DateTime dt = DateTime(now);
-    sprintf(reply, "%02d:%02d - %d/%d/%d UTC", dt.hour(), dt.minute(), dt.day(), dt.month(), dt.year());
-  } else if (memcmp(command, "time ", 5) == 0) {  // set time (to epoch seconds)
-    uint32_t secs = _atoi(&command[5]);
+    sprintf(resp, "%02d:%02d - %d/%d/%d UTC", dt.hour(), dt.minute(), dt.day(), dt.month(), dt.year());
+  } else if (memcmp(cmd, "time ", 5) == 0) {  // set time (to epoch seconds)
+    uint32_t secs = _atoi(&cmd[5]);
     uint32_t curr = getRTCClock()->getCurrentTime();
     if (secs > curr) {
       getRTCClock()->setCurrentTime(secs);
       uint32_t now = getRTCClock()->getCurrentTime();
       DateTime dt = DateTime(now);
-      sprintf(reply, "OK - clock set: %02d:%02d - %d/%d/%d UTC", dt.hour(), dt.minute(), dt.day(), dt.month(), dt.year());
+      sprintf(resp, "OK - clock set: %02d:%02d - %d/%d/%d UTC", dt.hour(), dt.minute(), dt.day(), dt.month(), dt.year());
     } else {
-      strcpy(reply, "(ERR: clock cannot go backwards)");
+      strcpy(resp, "(ERR: clock cannot go backwards)");
     }
-  } else if (memcmp(command, "tempradio ", 10) == 0) {
-    strcpy(tmp, &command[10]);
+  } else if (memcmp(cmd, "tempradio ", 10) == 0) {
+    strcpy(tmp, &cmd[10]);
     const char *parts[6];
     int num = mesh::Utils::parseTextParts(tmp, parts, 6);
     float freq  = num > 0 ? atof(parts[0]) : 0.0f;
@@ -233,63 +233,63 @@ void CommonCLI::handleCLICommand(uint32_t sender_timestamp, const char* command,
     int temp_timeout_mins  = num > 5 ? atoi(parts[5]) : 0;
     if (freq >= 300.0f && freq <= 2500.0f && sf >= 7 && sf <= 12 && cr >= 5 && cr <= 8 && bw >= 7.0f && bw <= 500.0f && temp_timeout_mins > 0) {
       _callbacks->applyTempRadioParams(freq, bw, sf, cr, sync_word, temp_timeout_mins);
-      sprintf(reply, "OK - temp params for %d mins", temp_timeout_mins);
+      sprintf(resp, "OK - temp params for %d mins", temp_timeout_mins);
     } else {
-      strcpy(reply, "Error, invalid params");
+      strcpy(resp, "Error, invalid params");
     }
-  } else if (memcmp(command, "clear stats", 11) == 0) {
+  } else if (memcmp(cmd, "clear stats", 11) == 0) {
     _callbacks->clearStats();
-    strcpy(reply, "(OK - stats reset)");
-  } else if (memcmp(command, "get ", 4) == 0) {
-    const char* config = &command[4];
+    strcpy(resp, "(OK - stats reset)");
+  } else if (memcmp(cmd, "get ", 4) == 0) {
+    const char* config = &cmd[4];
     if (memcmp(config, "af", 2) == 0) {
-      sprintf(reply, "> %s", StrHelper::ftoa(_prefs->airtime_factor));
+      sprintf(resp, "> %s", StrHelper::ftoa(_prefs->airtime_factor));
     } else if (memcmp(config, "int.thresh", 10) == 0) {
-      sprintf(reply, "> %d", (uint32_t) _prefs->interference_threshold);
+      sprintf(resp, "> %d", (uint32_t) _prefs->interference_threshold);
     } else if (memcmp(config, "agc.reset.interval", 18) == 0) {
-      sprintf(reply, "> %d", ((uint32_t) _prefs->agc_reset_interval) * 4);
+      sprintf(resp, "> %d", ((uint32_t) _prefs->agc_reset_interval) * 4);
     } else if (memcmp(config, "name", 4) == 0) {
-      sprintf(reply, "> %s", _prefs->node_name);
+      sprintf(resp, "> %s", _prefs->node_name);
     } else if (memcmp(config, "lat", 3) == 0) {
-      sprintf(reply, "> %s", StrHelper::ftoa(_prefs->node_lat));
+      sprintf(resp, "> %s", StrHelper::ftoa(_prefs->node_lat));
     } else if (memcmp(config, "lon", 3) == 0) {
-      sprintf(reply, "> %s", StrHelper::ftoa(_prefs->node_lon));
+      sprintf(resp, "> %s", StrHelper::ftoa(_prefs->node_lon));
     } else if (memcmp(config, "radio", 5) == 0) {
       char freq[16], bw[16];
       strcpy(freq, StrHelper::ftoa(_prefs->freq));
       strcpy(bw, StrHelper::ftoa(_prefs->bw));
-      sprintf(reply, "> %s,%s,%d,%d,0x%x", freq, bw, (uint32_t)_prefs->sf, (uint32_t)_prefs->cr, (uint32_t)_prefs->sync_word);
+      sprintf(resp, "> %s,%s,%d,%d,0x%x", freq, bw, (uint32_t)_prefs->sf, (uint32_t)_prefs->cr, (uint32_t)_prefs->sync_word);
     } else if (memcmp(config, "rxdelay", 7) == 0) {
-      sprintf(reply, "> %s", StrHelper::ftoa(_prefs->rx_delay_base));
+      sprintf(resp, "> %s", StrHelper::ftoa(_prefs->rx_delay_base));
     } else if (memcmp(config, "txdelay", 7) == 0) {
-      sprintf(reply, "> %s", StrHelper::ftoa(_prefs->tx_delay_factor));
+      sprintf(resp, "> %s", StrHelper::ftoa(_prefs->tx_delay_factor));
     } else if (memcmp(config, "tx", 2) == 0 && (config[2] == 0 || config[2] == ' ')) {
-      sprintf(reply, "> %d", (uint32_t) _prefs->tx_power_dbm);
+      sprintf(resp, "> %d", (uint32_t) _prefs->tx_power_dbm);
     } else if (memcmp(config, "freq", 4) == 0) {
-      sprintf(reply, "> %s", StrHelper::ftoa(_prefs->freq));
+      sprintf(resp, "> %s", StrHelper::ftoa(_prefs->freq));
     } else if (memcmp(config, "syncword", 8) == 0) {
-      sprintf(reply, "> 0x%x", (uint32_t)_prefs->sync_word);
+      sprintf(resp, "> 0x%x", (uint32_t)_prefs->sync_word);
     } else {
-      sprintf(reply, "??: %s", config);
+      sprintf(resp, "??: %s", config);
     }
-  } else if (memcmp(command, "set ", 4) == 0) {
-    const char* config = &command[4];
+  } else if (memcmp(cmd, "set ", 4) == 0) {
+    const char* config = &cmd[4];
     if (memcmp(config, "af ", 3) == 0) {
       _prefs->airtime_factor = atof(&config[3]);
       savePrefs();
-      strcpy(reply, "OK");
+      strcpy(resp, "OK");
     } else if (memcmp(config, "int.thresh ", 11) == 0) {
       _prefs->interference_threshold = atoi(&config[11]);
       savePrefs();
-      strcpy(reply, "OK");
+      strcpy(resp, "OK");
     } else if (memcmp(config, "agc.reset.interval ", 19) == 0) {
       _prefs->agc_reset_interval = atoi(&config[19]) / 4;
       savePrefs();
-      strcpy(reply, "OK");
+      strcpy(resp, "OK");
     } else if (memcmp(config, "name ", 5) == 0) {
       StrHelper::strncpy(_prefs->node_name, &config[5], sizeof(_prefs->node_name));
       savePrefs();
-      strcpy(reply, "OK");
+      strcpy(resp, "OK");
     } else if (memcmp(config, "radio ", 6) == 0) {
       strcpy(tmp, &config[6]);
       const char *parts[5];
@@ -307,41 +307,41 @@ void CommonCLI::handleCLICommand(uint32_t sender_timestamp, const char* command,
         _prefs->sync_word = sync_word;
         _callbacks->savePrefs();
         _callbacks->applyRadioParams(freq, bw, sf, cr, sync_word);
-        strcpy(reply, "OK");
+        strcpy(resp, "OK");
       } else {
-        strcpy(reply, "Error, invalid radio params");
+        strcpy(resp, "Error, invalid radio params");
       }
     } else if (memcmp(config, "lat ", 4) == 0) {
       _prefs->node_lat = atof(&config[4]);
       savePrefs();
-      strcpy(reply, "OK");
+      strcpy(resp, "OK");
     } else if (memcmp(config, "lon ", 4) == 0) {
       _prefs->node_lon = atof(&config[4]);
       savePrefs();
-      strcpy(reply, "OK");
+      strcpy(resp, "OK");
     } else if (memcmp(config, "rxdelay ", 8) == 0) {
       float db = atof(&config[8]);
       if (db >= 0) {
         _prefs->rx_delay_base = db;
         savePrefs();
-        strcpy(reply, "OK");
+        strcpy(resp, "OK");
       } else {
-        strcpy(reply, "Error, cannot be negative");
+        strcpy(resp, "Error, cannot be negative");
       }
     } else if (memcmp(config, "txdelay ", 8) == 0) {
       float f = atof(&config[8]);
       if (f >= 0) {
         _prefs->tx_delay_factor = f;
         savePrefs();
-        strcpy(reply, "OK");
+        strcpy(resp, "OK");
       } else {
-        strcpy(reply, "Error, cannot be negative");
+        strcpy(resp, "Error, cannot be negative");
       }
     } else if (memcmp(config, "tx ", 3) == 0) {
       _prefs->tx_power_dbm = atoi(&config[3]);
       savePrefs();
       _callbacks->setTxPower(_prefs->tx_power_dbm);
-      strcpy(reply, "OK");
+      strcpy(resp, "OK");
     } else if (memcmp(config, "kiss ", 5) == 0) {
       const char* kiss_config = &config[5];
       if (memcmp(kiss_config, "port ", 5) == 0) {
@@ -349,45 +349,45 @@ void CommonCLI::handleCLICommand(uint32_t sender_timestamp, const char* command,
         if (kiss_port < 16) {
           _prefs->kiss_port = kiss_port;
           savePrefs();
-          strcpy(reply, "OK");
+          strcpy(resp, "OK");
         } else {
-          sprintf(reply, "KISS port must be between 0 and 15, invalid value: %d", kiss_port);
+          sprintf(resp, "KISS port must be between 0 and 15, invalid value: %d", kiss_port);
         }
       } else {
-        sprintf(reply, "unknown kiss config: %s", kiss_config);
+        sprintf(resp, "unknown kiss config: %s", kiss_config);
       }
     } else if (sender_timestamp == 0 && memcmp(config, "freq ", 5) == 0) {
       _prefs->freq = atof(&config[5]);
       savePrefs();
-      strcpy(reply, "OK - reboot to apply");
+      strcpy(resp, "OK - reboot to apply");
     } else {
-      sprintf(reply, "unknown config: %s", config);
+      sprintf(resp, "unknown config: %s", config);
     }
-  } else if (sender_timestamp == 0 && strcmp(command, "erase") == 0) {
+  } else if (sender_timestamp == 0 && strcmp(cmd, "erase") == 0) {
     bool s = _callbacks->formatFileSystem();
-    sprintf(reply, "File system erase: %s", s ? "OK" : "Err");
-  } else if (memcmp(command, "ver", 3) == 0) {
-    sprintf(reply, "%s (Build: %s)", _callbacks->getFirmwareVer(), _callbacks->getBuildDate());
-  } else if (memcmp(command, "log start", 9) == 0) {
+    sprintf(resp, "File system erase: %s", s ? "OK" : "Err");
+  } else if (memcmp(cmd, "ver", 3) == 0) {
+    sprintf(resp, "%s (Build: %s)", _callbacks->getFirmwareVer(), _callbacks->getBuildDate());
+  } else if (memcmp(cmd, "log start", 9) == 0) {
     _callbacks->setLoggingOn(true);
-    strcpy(reply, "   logging on");
-  } else if (memcmp(command, "log stop", 8) == 0) {
+    strcpy(resp, "   logging on");
+  } else if (memcmp(cmd, "log stop", 8) == 0) {
     _callbacks->setLoggingOn(false);
-    strcpy(reply, "   logging off");
-  } else if (memcmp(command, "log erase", 9) == 0) {
+    strcpy(resp, "   logging off");
+  } else if (memcmp(cmd, "log erase", 9) == 0) {
     _callbacks->eraseLogFile();
-    strcpy(reply, "   log erased");
-  } else if (memcmp(command, "rxlog on", 8) == 0) {
+    strcpy(resp, "   log erased");
+  } else if (memcmp(cmd, "rxlog on", 8) == 0) {
     _prefs->log_rx = true;
-    strcpy(reply, "   rxlog on");
-  } else if (memcmp(command, "rxlog off", 9) == 0) {
+    strcpy(resp, "   rxlog on");
+  } else if (memcmp(cmd, "rxlog off", 9) == 0) {
     _prefs->log_rx = false;
-    strcpy(reply, "   rxlog off");
-  } else if (sender_timestamp == 0 && memcmp(command, "log", 3) == 0) {
+    strcpy(resp, "   rxlog off");
+  } else if (sender_timestamp == 0 && memcmp(cmd, "log", 3) == 0) {
     _callbacks->dumpLogFile();
-    strcpy(reply, "   EOF");
+    strcpy(resp, "   EOF");
   } else {
-    strcpy(reply, "Unknown command");
+    strcpy(resp, "Unknown command");
   }
 }
 
@@ -395,8 +395,8 @@ void CommonCLI::parseSerialKISS() {
 
 }
 
-void CommonCLI::handleKISSCommand(uint32_t sender_timestamp, const char* command, char* reply) {
-  uint8_t instr_byte = static_cast<uint8_t>(command[0]);
+void CommonCLI::handleKISSCommand(uint32_t sender_timestamp, const char* cmd, char* resp) {
+  uint8_t instr_byte = static_cast<uint8_t>(cmd[0]);
   
   uint8_t port = (instr_byte & 0xF0) >> 4;
   uint8_t cmd = instr_byte & 0x0F;

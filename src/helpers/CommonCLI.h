@@ -61,7 +61,6 @@ class CommonCLI {
   CLIMode _cli_mode = CLIMode::CLI;
   char tmp[80];
   static char command[CMD_BUF_LEN_MAX];
-  char reply[CMD_BUF_LEN_MAX];
 
 
   mesh::RTCClock* getRTCClock() { return _rtc; }
@@ -69,8 +68,8 @@ class CommonCLI {
   void loadPrefsInt(FILESYSTEM* _fs, const char* filename);
   void parseSerialCLI();
   void parseSerialKISS();
-  void handleCLICommand(uint32_t sender_timestamp, const char* command, char* reply);
-  void handleKISSCommand(uint32_t sender_timestamp, const char* command, char* reply);
+  void handleCLICommand(uint32_t sender_timestamp, const char* cmd, char* resp);
+  void handleKISSCommand(uint32_t sender_timestamp, const char* cmd, char* resp);
 
 public:
   CommonCLI(mesh::MainBoard& board, mesh::RTCClock& rtc, NodePrefs* prefs, CommonCLICallbacks* callbacks, mesh::Mesh* mesh)
