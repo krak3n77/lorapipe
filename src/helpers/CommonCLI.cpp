@@ -119,51 +119,51 @@ void CommonCLI::handleSerialData() {
 }
 
 void CommonCLI::parseSerialCLI() {
-  int len = strlen(command);
+  int len = strlen(_cmd);
 
-  while (Serial.available() && len < sizeof(command)-1) {
+  while (Serial.available() && len < sizeof(_cmd)-1) {
     char c = Serial.read();
     if (c != '\n') {
-      command[len++] = c;
-      command[len] = 0;
+      _cmd[len++] = c;
+      _cmd[len] = 0;
     }
     Serial.print(c);  // echo read characters back to the serial console
   }
-  if (len == sizeof(command)-1) {  // command buffer full
-    command[sizeof(command)-1] = '\r';
+  if (len == sizeof(_cmd)-1) {  // command buffer full
+    _cmd[sizeof(_cmd)-1] = '\r';
   }
 
-  if (len > 0 && command[len - 1] == '\r') {  // received complete line
-    command[len - 1] = 0;  // replace newline with C string null terminator
+  if (len > 0 && _cmd[len - 1] == '\r') {  // received complete line
+    _cmd[len - 1] = 0;  // replace newline with C string null terminator
     
-    char* cmd = command;
+    char* command = _cmd;
     char reply[CMD_BUF_LEN_MAX];
     char* resp = reply;
-    while (*cmd == ' ') cmd++;   // skip leading spaces
-    if (strlen(cmd) > 4 && cmd[2] == '|') {  // optional prefix (for companion radio CLI)
-      memcpy(resp, cmd, 3);  // reflect the prefix back
+    while (*command == ' ') command++;   // skip leading spaces
+    if (strlen(command) > 4 && command[2] == '|') {  // optional prefix (for companion radio CLI)
+      memcpy(resp, command, 3);  // reflect the prefix back
       resp += 3;
-      cmd += 3;
+      command += 3;
     }
-    handleCLICommand(0, cmd, resp);  // NOTE: there is no sender_timestamp via serial!
+    handleCLICommand(0, command, resp);  // NOTE: there is no sender_timestamp via serial!
     if (resp[0]) {
       Serial.print("  -> "); Serial.println(resp);
     }
 
-    command[0] = 0;  // reset command buffer
+    _cmd[0] = 0;  // reset command buffer
   }
 }
 
-void CommonCLI::handleCLICommand(uint32_t sender_timestamp, const char* cmd, char* resp) {
-  if (memcmp(cmd, "reboot", 6) == 0) {
+void CommonCLI::handleCLICommand(uint32_t sender_timestamp, const char* command, char* resp) {
+  if (memcmp(command, "reboot", 6) == 0) {
     _board->reboot();  // doesn't return
-  } else if (memcmp(cmd, "serial mode ", 12) == 0) {
-    const char* mode = &cmd[12];
-    if (memcmp(cmd, "kiss", 4) == 0) {
+  } else if (memcmp(command, "serial mode ", 12) == 0) {
+    const char* mode = &command[12];
+    if (memcmp(command, "kiss", 4) == 0) {
       _cli_mode = CLIMode::KISS;
     }
-  } else if (memcmp(cmd, "txraw ", 6) == 0) {
-    const char* tx_hex = &cmd[6];
+  } else if (memcmp(command, "txraw ", 6) == 0) {
+    const char* tx_hex = &command[6];
 
     mesh::Packet* pkt = _mesh->obtainNewPacket();
     uint8_t tx_buf[MAX_PACKET_PAYLOAD];
@@ -182,7 +182,7 @@ void CommonCLI::handleCLICommand(uint32_t sender_timestamp, const char* cmd, cha
     mesh::Utils::printHex(Serial, tx_buf, len_buf);
     _mesh->sendPacket(pkt, 1);
     strcpy(resp, "OK");
-  } else if (memcmp(cmd, "clock sync", 10) == 0) {
+  } else if (memcmp(command, "clock sync", 10) == 0) {
     uint32_t curr = getRTCClock()->getCurrentTime();
     if (sender_timestamp > curr) {
       getRTCClock()->setCurrentTime(sender_timestamp + 1);
@@ -192,16 +192,16 @@ void CommonCLI::handleCLICommand(uint32_t sender_timestamp, const char* cmd, cha
     } else {
       strcpy(resp, "ERR: clock cannot go backwards");
     }
-  } else if (memcmp(cmd, "start ota", 9) == 0) {
+  } else if (memcmp(command, "start ota", 9) == 0) {
     if (!_board->startOTAUpdate(_prefs->node_name, resp)) {
       strcpy(resp, "Error");
     }
-  } else if (memcmp(cmd, "clock", 5) == 0) {
+  } else if (memcmp(command, "clock", 5) == 0) {
     uint32_t now = getRTCClock()->getCurrentTime();
     DateTime dt = DateTime(now);
     sprintf(resp, "%02d:%02d - %d/%d/%d UTC", dt.hour(), dt.minute(), dt.day(), dt.month(), dt.year());
-  } else if (memcmp(cmd, "time ", 5) == 0) {  // set time (to epoch seconds)
-    uint32_t secs = _atoi(&cmd[5]);
+  } else if (memcmp(command, "time ", 5) == 0) {  // set time (to epoch seconds)
+    uint32_t secs = _atoi(&command[5]);
     uint32_t curr = getRTCClock()->getCurrentTime();
     if (secs > curr) {
       getRTCClock()->setCurrentTime(secs);
@@ -211,10 +211,10 @@ void CommonCLI::handleCLICommand(uint32_t sender_timestamp, const char* cmd, cha
     } else {
       strcpy(resp, "(ERR: clock cannot go backwards)");
     }
-  } else if (memcmp(cmd, "tempradio ", 10) == 0) {
-    strcpy(tmp, &cmd[10]);
+  } else if (memcmp(command, "tempradio ", 10) == 0) {
+    strcpy(_tmp, &command[10]);
     const char *parts[6];
-    int num = mesh::Utils::parseTextParts(tmp, parts, 6);
+    int num = mesh::Utils::parseTextParts(_tmp, parts, 6);
     float freq  = num > 0 ? atof(parts[0]) : 0.0f;
     float bw    = num > 1 ? atof(parts[1]) : 0.0f;
     uint8_t sf  = num > 2 ? atoi(parts[2]) : 0;
@@ -227,11 +227,11 @@ void CommonCLI::handleCLICommand(uint32_t sender_timestamp, const char* cmd, cha
     } else {
       strcpy(resp, "Error, invalid params");
     }
-  } else if (memcmp(cmd, "clear stats", 11) == 0) {
+  } else if (memcmp(command, "clear stats", 11) == 0) {
     _callbacks->clearStats();
     strcpy(resp, "(OK - stats reset)");
-  } else if (memcmp(cmd, "get ", 4) == 0) {
-    const char* config = &cmd[4];
+  } else if (memcmp(command, "get ", 4) == 0) {
+    const char* config = &command[4];
     if (memcmp(config, "af", 2) == 0) {
       sprintf(resp, "> %s", StrHelper::ftoa(_prefs->airtime_factor));
     } else if (memcmp(config, "int.thresh", 10) == 0) {
@@ -262,8 +262,8 @@ void CommonCLI::handleCLICommand(uint32_t sender_timestamp, const char* cmd, cha
     } else {
       sprintf(resp, "??: %s", config);
     }
-  } else if (memcmp(cmd, "set ", 4) == 0) {
-    const char* config = &cmd[4];
+  } else if (memcmp(command, "set ", 4) == 0) {
+    const char* config = &command[4];
     if (memcmp(config, "af ", 3) == 0) {
       _prefs->airtime_factor = atof(&config[3]);
       savePrefs();
@@ -281,9 +281,9 @@ void CommonCLI::handleCLICommand(uint32_t sender_timestamp, const char* cmd, cha
       savePrefs();
       strcpy(resp, "OK");
     } else if (memcmp(config, "radio ", 6) == 0) {
-      strcpy(tmp, &config[6]);
+      strcpy(_tmp, &config[6]);
       const char *parts[5];
-      int num = mesh::Utils::parseTextParts(tmp, parts, 5);
+      int num = mesh::Utils::parseTextParts(_tmp, parts, 5);
       float freq  = num > 0 ? atof(parts[0]) : 0.0f;
       float bw    = num > 1 ? atof(parts[1]) : 0.0f;
       uint8_t sf  = num > 2 ? atoi(parts[2]) : 0;
@@ -353,27 +353,27 @@ void CommonCLI::handleCLICommand(uint32_t sender_timestamp, const char* cmd, cha
     } else {
       sprintf(resp, "unknown config: %s", config);
     }
-  } else if (sender_timestamp == 0 && strcmp(cmd, "erase") == 0) {
+  } else if (sender_timestamp == 0 && strcmp(command, "erase") == 0) {
     bool s = _callbacks->formatFileSystem();
     sprintf(resp, "File system erase: %s", s ? "OK" : "Err");
-  } else if (memcmp(cmd, "ver", 3) == 0) {
+  } else if (memcmp(command, "ver", 3) == 0) {
     sprintf(resp, "%s (Build: %s)", _callbacks->getFirmwareVer(), _callbacks->getBuildDate());
-  } else if (memcmp(cmd, "log start", 9) == 0) {
+  } else if (memcmp(command, "log start", 9) == 0) {
     _callbacks->setLoggingOn(true);
     strcpy(resp, "   logging on");
-  } else if (memcmp(cmd, "log stop", 8) == 0) {
+  } else if (memcmp(command, "log stop", 8) == 0) {
     _callbacks->setLoggingOn(false);
     strcpy(resp, "   logging off");
-  } else if (memcmp(cmd, "log erase", 9) == 0) {
+  } else if (memcmp(command, "log erase", 9) == 0) {
     _callbacks->eraseLogFile();
     strcpy(resp, "   log erased");
-  } else if (memcmp(cmd, "rxlog on", 8) == 0) {
+  } else if (memcmp(command, "rxlog on", 8) == 0) {
     _prefs->log_rx = true;
     strcpy(resp, "   rxlog on");
-  } else if (memcmp(cmd, "rxlog off", 9) == 0) {
+  } else if (memcmp(command, "rxlog off", 9) == 0) {
     _prefs->log_rx = false;
     strcpy(resp, "   rxlog off");
-  } else if (sender_timestamp == 0 && memcmp(cmd, "log", 3) == 0) {
+  } else if (sender_timestamp == 0 && memcmp(command, "log", 3) == 0) {
     _callbacks->dumpLogFile();
     strcpy(resp, "   EOF");
   } else {
@@ -383,8 +383,8 @@ void CommonCLI::handleCLICommand(uint32_t sender_timestamp, const char* cmd, cha
 
 // https://en.wikipedia.org/wiki/KISS_(amateur_radio_protocol)
 void CommonCLI::parseSerialKISS() {
-  char* cmd = command;
-  while (Serial.available() && _kiss_len < sizeof(command)-1) {
+  char* command = _cmd;
+  while (Serial.available() && _kiss_len < sizeof(_cmd)-1) {
     uint8_t b = Serial.read();
     // handle kiss escapes
     if (b == KISS_FESC) {
@@ -393,9 +393,9 @@ void CommonCLI::parseSerialKISS() {
     } else if (_kiss_esc) {
       // eat and discard any escaped bytes other than these
       if (b == KISS_TFEND) { // insert escaped FEND
-        command[_kiss_len++] = KISS_FEND;
+        _cmd[_kiss_len++] = KISS_FEND;
       } else if (b == KISS_TFESC) { // insert escaped FESC
-        command[_kiss_len++] = KISS_FESC;
+        _cmd[_kiss_len++] = KISS_FESC;
       } else if (b == KISS_FESC) { // aborted transmission
         _kiss_len = 0;
       }
@@ -404,13 +404,13 @@ void CommonCLI::parseSerialKISS() {
     // command buffer strips FENDs
     // increment length and add byte to command buffer if it is not a FEND
     else if (b != KISS_FEND && b != KISS_FESC) {
-      command[_kiss_len++] = b;
+      _cmd[_kiss_len++] = b;
     }
     // if current command length is greater than 0 and we encounter an FEND,
     // handle the whole command buffer as a KISS command, send length, and
     // then reset length to zero to wait for the next KISS command
     if (_kiss_len > 0 && b == KISS_FEND) {
-      handleKISSCommand(0, cmd, _kiss_len);
+      handleKISSCommand(0, command, _kiss_len);
       _kiss_len = 0;
       if (_kiss_esc) {
         // encountered literal FEND while in escape mode, resetting escape mode
@@ -418,24 +418,24 @@ void CommonCLI::parseSerialKISS() {
       }
     }
   }
-  if (_kiss_len == sizeof(command)-1) {  // command buffer full
+  if (_kiss_len == sizeof(_cmd)-1) {  // command buffer full
     // just send the truncated transmission for now
     // TODO: handle error condition?
-    handleKISSCommand(0, cmd, _kiss_len);
+    handleKISSCommand(0, command, _kiss_len);
     _kiss_len = 0;
   }
 }
 
-void CommonCLI::handleKISSCommand(uint32_t sender_timestamp, const char* cmd, uint16_t len) {
+void CommonCLI::handleKISSCommand(uint32_t sender_timestamp, const char* kiss_data, const uint16_t len) {
   if (len == 0) return;
 
-  uint8_t instr_byte = static_cast<uint8_t>(cmd[0]);
+  const uint8_t instr_byte = static_cast<uint8_t>(kiss_data[0]);
   
-  uint8_t kiss_port = (instr_byte & 0xF0) >> 4;
-  uint8_t kiss_cmd = instr_byte & 0x0F;
+  const uint8_t kiss_port = (instr_byte & 0xF0) >> 4;
+  const uint8_t kiss_cmd = instr_byte & 0x0F;
 
-  const char* data = &cmd[1];
-  uint16_t data_len = len-1;
+  const uint16_t kiss_data_len = len-1;
+  kiss_data++;
 
   // this KISS data is from the host to our KISS port number
   if (kiss_port == _prefs->kiss_port) {

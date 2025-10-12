@@ -64,8 +64,8 @@ class CommonCLI {
   CommonCLICallbacks* _callbacks;
   mesh::MainBoard* _board;
   CLIMode _cli_mode = CLIMode::CLI;
-  char tmp[80];
-  static char command[CMD_BUF_LEN_MAX];
+  char _tmp[80];
+  static char _cmd[CMD_BUF_LEN_MAX];
   static uint16_t _kiss_len;
   static bool _kiss_esc;
 
@@ -75,13 +75,13 @@ class CommonCLI {
   void loadPrefsInt(FILESYSTEM* _fs, const char* filename);
   void parseSerialCLI();
   void parseSerialKISS();
-  void handleCLICommand(uint32_t sender_timestamp, const char* cmd, char* resp);
-  void handleKISSCommand(uint32_t sender_timestamp, const char* cmd, uint16_t len);
+  void handleCLICommand(uint32_t sender_timestamp, const char* command, char* resp);
+  void handleKISSCommand(uint32_t sender_timestamp, const char* kiss_data, uint16_t len);
 
 public:
   CommonCLI(mesh::MainBoard& board, mesh::RTCClock& rtc, NodePrefs* prefs, CommonCLICallbacks* callbacks, mesh::Mesh* mesh)
       : _board(&board), _rtc(&rtc), _prefs(prefs), _callbacks(callbacks), _mesh(mesh) {
-        command[0] = 0;
+        _cmd[0] = 0;
         _kiss_len = 0;
         _kiss_esc = false;
       }
