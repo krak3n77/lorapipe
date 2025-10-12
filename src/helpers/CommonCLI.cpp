@@ -427,15 +427,15 @@ void CommonCLI::parseSerialKISS() {
 }
 
 void CommonCLI::handleKISSCommand(uint32_t sender_timestamp, const char* kiss_data, const uint16_t len) {
-  if (len == 0) return;
+  if (len == 0) return; // we shouldn't hit this but just in case
 
   const uint8_t instr_byte = static_cast<uint8_t>(kiss_data[0]);
   
   const uint8_t kiss_port = (instr_byte & 0xF0) >> 4;
   const uint8_t kiss_cmd = instr_byte & 0x0F;
 
-  const uint16_t kiss_data_len = len-1;
-  kiss_data++;
+  const uint16_t kiss_data_len = len-1; // kiss port&command are 1 byte, indicate data length afterwards
+  kiss_data++; // advance to data
 
   // this KISS data is from the host to our KISS port number
   if (kiss_port == _prefs->kiss_port) {
