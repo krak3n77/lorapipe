@@ -87,14 +87,27 @@ protected:
   }
 
   void logRxRaw(float snr, float rssi, const uint8_t raw[], int len) override {
-    if (!_prefs.log_rx)
-      return;
-    CommonCLI* cli = getCLI();
-    Serial.printf("%lu", rtc_clock.getCurrentTime());
-    Serial.printf(",RXLOG,%.2f,%.2f", rssi, snr);
-    Serial.print(",");
-    mesh::Utils::printHex(Serial, raw, len);
-    Serial.println();
+    CLIMode cli_mode = _cli.getCLIMode();
+    if (cli_mode == CLIMode::CLI) {
+      if (!_prefs.log_rx) return;
+      CommonCLI* cli = getCLI();
+      Serial.printf("%lu", rtc_clock.getCurrentTime());
+      Serial.printf(",RXLOG,%.2f,%.2f", rssi, snr);
+      Serial.print(",");
+      mesh::Utils::printHex(Serial, raw, len);
+      Serial.println();
+    } else if (cli_mode == CLIMode::KISS) {
+      uint16_t kiss_rx_len = len+3;
+      uint8_t kiss_rx[kiss_rx_len];  // create rx buffer with enough room to hold TFENDs and KISS commands
+      kiss_rx[0] = KISS_FEND; // begin response
+      uint8_t kiss_cmd = 0;
+      kiss_cmd = ((_prefs.kiss_port << 4) & KISS_MASK_PORT) |
+            (KISS_CMD_DATA & KISS_MASK_CMD); // set KISS port and DATA cmd
+      kiss_rx[1] = kiss_cmd;
+      memcpy(&kiss_rx[2], raw, len); // copy RX data into response
+      kiss_rx[len-1] = KISS_FEND;    // end response
+      Serial.write(kiss_rx, kiss_rx_len);
+    }
   }
 
   int calcRxDelay(float score, uint32_t air_time) const override {
@@ -277,9 +290,7 @@ void setup() {
 }
 
 void loop() {
-  if (Serial.available()) {
+  if (Serial.available())
     the_mesh.handleSerialData();
-  }
-
   the_mesh.loop();
 }

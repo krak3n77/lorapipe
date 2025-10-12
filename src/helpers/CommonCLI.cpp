@@ -110,6 +110,10 @@ void CommonCLI::savePrefs() {
   _callbacks->savePrefs();
 }
 
+CLIMode CommonCLI::getCLIMode() {
+  return _cli_mode;
+}
+
 void CommonCLI::handleSerialData() {
   if (_cli_mode == CLIMode::CLI) {
     this->parseSerialCLI();

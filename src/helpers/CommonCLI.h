@@ -18,6 +18,9 @@
 #define KISS_TFEND 0xDC
 #define KISS_TFESC 0xDD
 
+#define KISS_MASK_PORT   0xF0
+#define KISS_MASK_CMD    0x0F
+
 #define KISS_CMD_DATA    0x00
 #define KISS_CMD_TXDELAY 0x01
 #define KISS_CMD_PERSIST 0x02
@@ -99,4 +102,5 @@ public:
   void loadPrefs(FILESYSTEM* _fs);
   void savePrefs(FILESYSTEM* _fs);
   void handleSerialData();
+  CLIMode getCLIMode();
 };
