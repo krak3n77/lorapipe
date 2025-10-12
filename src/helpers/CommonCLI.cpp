@@ -136,15 +136,12 @@ void CommonCLI::parseSerialCLI() {
   if (len > 0 && _cmd[len - 1] == '\r') {  // received complete line
     _cmd[len - 1] = 0;  // replace newline with C string null terminator
     
-    char* command = _cmd;
+    // construct reply buffer and refer to cmdbuf and replybuf by ptr
     char reply[CMD_BUF_LEN_MAX];
+    char* command = _cmd;
     char* resp = reply;
+
     while (*command == ' ') command++;   // skip leading spaces
-    if (strlen(command) > 4 && command[2] == '|') {  // optional prefix (for companion radio CLI)
-      memcpy(resp, command, 3);  // reflect the prefix back
-      resp += 3;
-      command += 3;
-    }
     handleCLICommand(0, command, resp);  // NOTE: there is no sender_timestamp via serial!
     if (resp[0]) {
       Serial.print("  -> "); Serial.println(resp);
@@ -154,7 +151,11 @@ void CommonCLI::parseSerialCLI() {
   }
 }
 
-void CommonCLI::handleCLICommand(uint32_t sender_timestamp, const char* command, char* resp) {
+void CommonCLI::handleCLICommand(
+  uint32_t sender_timestamp,
+  const char* command,
+  char* resp
+){
   if (memcmp(command, "reboot", 6) == 0) {
     _board->reboot();  // doesn't return
   } else if (memcmp(command, "serial mode ", 12) == 0) {
@@ -188,7 +189,9 @@ void CommonCLI::handleCLICommand(uint32_t sender_timestamp, const char* command,
       getRTCClock()->setCurrentTime(sender_timestamp + 1);
       uint32_t now = getRTCClock()->getCurrentTime();
       DateTime dt = DateTime(now);
-      sprintf(resp, "OK - clock set: %02d:%02d - %d/%d/%d UTC", dt.hour(), dt.minute(), dt.day(), dt.month(), dt.year());
+      sprintf(resp,
+              "OK - clock set: %02d:%02d - %d/%d/%d UTC",
+              dt.hour(), dt.minute(), dt.day(), dt.month(), dt.year());
     } else {
       strcpy(resp, "ERR: clock cannot go backwards");
     }
@@ -199,7 +202,9 @@ void CommonCLI::handleCLICommand(uint32_t sender_timestamp, const char* command,
   } else if (memcmp(command, "clock", 5) == 0) {
     uint32_t now = getRTCClock()->getCurrentTime();
     DateTime dt = DateTime(now);
-    sprintf(resp, "%02d:%02d - %d/%d/%d UTC", dt.hour(), dt.minute(), dt.day(), dt.month(), dt.year());
+    sprintf(resp,
+            "%02d:%02d - %d/%d/%d UTC",
+            dt.hour(), dt.minute(), dt.day(), dt.month(), dt.year());
   } else if (memcmp(command, "time ", 5) == 0) {  // set time (to epoch seconds)
     uint32_t secs = _atoi(&command[5]);
     uint32_t curr = getRTCClock()->getCurrentTime();
@@ -207,7 +212,9 @@ void CommonCLI::handleCLICommand(uint32_t sender_timestamp, const char* command,
       getRTCClock()->setCurrentTime(secs);
       uint32_t now = getRTCClock()->getCurrentTime();
       DateTime dt = DateTime(now);
-      sprintf(resp, "OK - clock set: %02d:%02d - %d/%d/%d UTC", dt.hour(), dt.minute(), dt.day(), dt.month(), dt.year());
+      sprintf(resp,
+              "OK - clock set: %02d:%02d - %d/%d/%d UTC",
+              dt.hour(), dt.minute(), dt.day(), dt.month(), dt.year());
     } else {
       strcpy(resp, "(ERR: clock cannot go backwards)");
     }
@@ -221,8 +228,14 @@ void CommonCLI::handleCLICommand(uint32_t sender_timestamp, const char* command,
     uint8_t cr  = num > 3 ? atoi(parts[3]) : 0;
     uint8_t sync_word  = num > 4 ? strtol(parts[4], nullptr, 16) : 0;
     int temp_timeout_mins  = num > 5 ? atoi(parts[5]) : 0;
-    if (freq >= 300.0f && freq <= 2500.0f && sf >= 7 && sf <= 12 && cr >= 5 && cr <= 8 && bw >= 7.0f && bw <= 500.0f && temp_timeout_mins > 0) {
-      _callbacks->applyTempRadioParams(freq, bw, sf, cr, sync_word, temp_timeout_mins);
+    if (freq >= 300.0f && freq <= 2500.0f &&
+        sf >= 7 && sf <= 12 &&
+        cr >= 5 && cr <= 8 &&
+        bw >= 7.0f && bw <= 500.0f &&
+        temp_timeout_mins > 0)
+    {
+      _callbacks->applyTempRadioParams(freq, bw, sf, cr,
+                                       sync_word, temp_timeout_mins);
       sprintf(resp, "OK - temp params for %d mins", temp_timeout_mins);
     } else {
       strcpy(resp, "Error, invalid params");
@@ -248,12 +261,17 @@ void CommonCLI::handleCLICommand(uint32_t sender_timestamp, const char* command,
       char freq[16], bw[16];
       strcpy(freq, StrHelper::ftoa(_prefs->freq));
       strcpy(bw, StrHelper::ftoa(_prefs->bw));
-      sprintf(resp, "> %s,%s,%d,%d,0x%x", freq, bw, (uint32_t)_prefs->sf, (uint32_t)_prefs->cr, (uint32_t)_prefs->sync_word);
+      sprintf(resp,
+              "> %s,%s,%d,%d,0x%x",
+              freq, bw, (uint32_t)_prefs->sf, (uint32_t)_prefs->cr,
+              (uint32_t)_prefs->sync_word);
     } else if (memcmp(config, "rxdelay", 7) == 0) {
       sprintf(resp, "> %s", StrHelper::ftoa(_prefs->rx_delay_base));
     } else if (memcmp(config, "txdelay", 7) == 0) {
       sprintf(resp, "> %s", StrHelper::ftoa(_prefs->tx_delay_factor));
-    } else if (memcmp(config, "tx", 2) == 0 && (config[2] == 0 || config[2] == ' ')) {
+    } else if (memcmp(config, "tx", 2) == 0 &&
+               (config[2] == 0 || config[2] == ' '))
+    {
       sprintf(resp, "> %d", (uint32_t) _prefs->tx_power_dbm);
     } else if (memcmp(config, "freq", 4) == 0) {
       sprintf(resp, "> %s", StrHelper::ftoa(_prefs->freq));
@@ -277,7 +295,9 @@ void CommonCLI::handleCLICommand(uint32_t sender_timestamp, const char* command,
       savePrefs();
       strcpy(resp, "OK");
     } else if (memcmp(config, "name ", 5) == 0) {
-      StrHelper::strncpy(_prefs->node_name, &config[5], sizeof(_prefs->node_name));
+      StrHelper::strncpy(_prefs->node_name,
+                         &config[5],
+                         sizeof(_prefs->node_name));
       savePrefs();
       strcpy(resp, "OK");
     } else if (memcmp(config, "radio ", 6) == 0) {
@@ -289,7 +309,11 @@ void CommonCLI::handleCLICommand(uint32_t sender_timestamp, const char* command,
       uint8_t sf  = num > 2 ? atoi(parts[2]) : 0;
       uint8_t cr  = num > 3 ? atoi(parts[3]) : 0;
       uint8_t sync_word  = num > 4 ? strtol(parts[4], nullptr, 16) : 0;
-      if (freq >= 300.0f && freq <= 2500.0f && sf >= 7 && sf <= 12 && cr >= 5 && cr <= 8 && bw >= 7.0f && bw <= 500.0f) {
+      if (freq >= 300.0f && freq <= 2500.0f &&
+          sf >= 7 && sf <= 12 &&
+          cr >= 5 && cr <= 8 &&
+          bw >= 7.0f && bw <= 500.0f)
+      {
         _prefs->sf = sf;
         _prefs->cr = cr;
         _prefs->freq = freq;
@@ -341,7 +365,9 @@ void CommonCLI::handleCLICommand(uint32_t sender_timestamp, const char* command,
           savePrefs();
           strcpy(resp, "OK");
         } else {
-          sprintf(resp, "KISS port must be between 0 and 15, invalid value: %d", kiss_port);
+          sprintf(resp,
+                  "KISS port must be between 0 and 15, invalid value: %d",
+                  kiss_port);
         }
       } else {
         sprintf(resp, "unknown kiss config: %s", kiss_config);
@@ -357,7 +383,10 @@ void CommonCLI::handleCLICommand(uint32_t sender_timestamp, const char* command,
     bool s = _callbacks->formatFileSystem();
     sprintf(resp, "File system erase: %s", s ? "OK" : "Err");
   } else if (memcmp(command, "ver", 3) == 0) {
-    sprintf(resp, "%s (Build: %s)", _callbacks->getFirmwareVer(), _callbacks->getBuildDate());
+    sprintf(resp,
+            "%s (Build: %s)",
+            _callbacks->getFirmwareVer(),
+            _callbacks->getBuildDate());
   } else if (memcmp(command, "log start", 9) == 0) {
     _callbacks->setLoggingOn(true);
     strcpy(resp, "   logging on");
@@ -386,39 +415,56 @@ void CommonCLI::parseSerialKISS() {
   char* command = _cmd;
   while (Serial.available() && _kiss_len < sizeof(_cmd)-1) {
     uint8_t b = Serial.read();
-    // handle kiss escapes
-    if (b == KISS_FESC) {
-      _kiss_esc = true;
-      continue;
-    } else if (_kiss_esc) {
-      // eat and discard any escaped bytes other than these
-      if (b == KISS_TFEND) { // insert escaped FEND
-        _cmd[_kiss_len++] = KISS_FEND;
-      } else if (b == KISS_TFESC) { // insert escaped FESC
-        _cmd[_kiss_len++] = KISS_FESC;
-      } else if (b == KISS_FESC) { // aborted transmission
-        _kiss_len = 0;
-      }
-      _kiss_esc = false;
-    }
-    // command buffer strips FENDs
-    // increment length and add byte to command buffer if it is not a FEND
-    else if (b != KISS_FEND && b != KISS_FESC) {
-      _cmd[_kiss_len++] = b;
-    }
-    // if current command length is greater than 0 and we encounter an FEND,
-    // handle the whole command buffer as a KISS command, send length, and
-    // then reset length to zero to wait for the next KISS command
-    if (_kiss_len > 0 && b == KISS_FEND) {
-      handleKISSCommand(0, command, _kiss_len);
-      _kiss_len = 0;
-      if (_kiss_esc) {
-        // encountered literal FEND while in escape mode, resetting escape mode
-        _kiss_esc = false;
-      }
+    // handle KISS commands
+    switch (b) {
+      case KISS_FESC:
+        // set escape mode if we encounter a FESC
+        if (_kiss_esc) { // aborted transmission, double FESC
+          _kiss_len = 0;
+          _kiss_esc = false;
+        } else { // regular escape
+          _kiss_esc = true;
+        }
+        continue;
+      case KISS_FEND:
+        // if current command length is greater than 0 and we encounter a FEND,
+        // handle the whole command buffer as a KISS command, send length, and
+        // then reset length to zero to wait for the next KISS command
+        if (_kiss_len > 0) {
+          // encountered literal FEND while in escape mode. reset escape mode
+          if (_kiss_esc) _kiss_esc = false;
+          // handle the command and reset kiss cmdbuf length to 0
+          handleKISSCommand(0, command, _kiss_len);
+          _kiss_len = 0;
+        }
+        break;
+      case KISS_TFESC:
+        // literal FESC to cmdbuf if in escape mode, otherwise literal TFESC
+        if (_kiss_esc) {
+          _cmd[_kiss_len++] = KISS_FESC;
+          _kiss_esc = false;
+        } else
+          _cmd[_kiss_len++] = KISS_TFESC;
+        break;
+      case KISS_TFEND:
+        // literal FEND to cmdbuf if in escape mode, otherwise literal TFEND
+        if (_kiss_esc) {
+          _cmd[_kiss_len++] = KISS_FEND;
+          _kiss_esc = false;
+        } else
+          _cmd[_kiss_len++] = KISS_TFEND;
+        break;
+      default:
+        // add byte to command buffer and increment _kiss_len,
+        // if it is not handled above.
+        // eat and discard any unknown escaped bytes
+        if (!_kiss_esc) _cmd[_kiss_len++] = b;
+        break;
     }
   }
-  if (_kiss_len == sizeof(_cmd)-1) {  // command buffer full
+
+  // check if command buffer is full after reading and processing last byte
+  if (_kiss_len == sizeof(_cmd)-1) {
     // just send the truncated transmission for now
     // TODO: handle error condition?
     handleKISSCommand(0, command, _kiss_len);
@@ -426,7 +472,11 @@ void CommonCLI::parseSerialKISS() {
   }
 }
 
-void CommonCLI::handleKISSCommand(uint32_t sender_timestamp, const char* kiss_data, const uint16_t len) {
+void CommonCLI::handleKISSCommand(
+  uint32_t sender_timestamp,
+  const char* kiss_data,
+  const uint16_t len
+){
   if (len == 0) return; // we shouldn't hit this but just in case
 
   const uint8_t instr_byte = static_cast<uint8_t>(kiss_data[0]);
@@ -434,7 +484,8 @@ void CommonCLI::handleKISSCommand(uint32_t sender_timestamp, const char* kiss_da
   const uint8_t kiss_port = (instr_byte & 0xF0) >> 4;
   const uint8_t kiss_cmd = instr_byte & 0x0F;
 
-  const uint16_t kiss_data_len = len-1; // kiss port&command are 1 byte, indicate data length afterwards
+  // kiss port&command are 1 byte, indicate remaining data length
+  const uint16_t kiss_data_len = len-1;
   kiss_data++; // advance to data
 
   // this KISS data is from the host to our KISS port number
