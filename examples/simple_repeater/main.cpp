@@ -66,7 +66,6 @@
 
 #define CLI_REPLY_DELAY_MILLIS  600
 
-#define CMD_BUF_LEN_MAX 500
 
 class MyMesh : public mesh::Mesh, public CommonCLICallbacks {
 
@@ -88,14 +87,27 @@ protected:
   }
 
   void logRxRaw(float snr, float rssi, const uint8_t raw[], int len) override {
-    if (!_prefs.log_rx)
-      return;
-    CommonCLI* cli = getCLI();
-    Serial.printf("%lu", rtc_clock.getCurrentTime());
-    Serial.printf(",RXLOG,%.2f,%.2f", rssi, snr);
-    Serial.print(",");
-    mesh::Utils::printHex(Serial, raw, len);
-    Serial.println();
+    CLIMode cli_mode = _cli.getCLIMode();
+    if (cli_mode == CLIMode::CLI) {
+      if (!_prefs.log_rx) return;
+      CommonCLI* cli = getCLI();
+      Serial.printf("%lu", rtc_clock.getCurrentTime());
+      Serial.printf(",RXLOG,%.2f,%.2f", rssi, snr);
+      Serial.print(",");
+      mesh::Utils::printHex(Serial, raw, len);
+      Serial.println();
+    } else if (cli_mode == CLIMode::KISS) {
+      uint16_t kiss_rx_len = len+3;
+      uint8_t kiss_rx[kiss_rx_len];  // create rx buffer with enough room to hold TFENDs and KISS commands
+      kiss_rx[0] = KISS_FEND; // begin response
+      uint8_t kiss_cmd = 0;
+      kiss_cmd = ((_prefs.kiss_port << 4) & KISS_MASK_PORT) |
+            (KISS_CMD_DATA & KISS_MASK_CMD); // set KISS port and DATA cmd
+      kiss_rx[1] = kiss_cmd;
+      memcpy(&kiss_rx[2], raw, len); // copy RX data into response
+      kiss_rx[len-1] = KISS_FEND;    // end response
+      Serial.write(kiss_rx, kiss_rx_len);
+    }
   }
 
   int calcRxDelay(float score, uint32_t air_time) const override {
@@ -144,7 +156,6 @@ public:
 
     radio_set_params(_prefs.freq, _prefs.bw, _prefs.sf, _prefs.cr, _prefs.sync_word);
     radio_set_tx_power(_prefs.tx_power_dbm);
-
   }
 
   const char* getFirmwareVer() override { return FIRMWARE_VERSION; }
@@ -222,16 +233,8 @@ public:
     resetStats();
   }
 
-  void handleCommand(uint32_t sender_timestamp, char* command, char* reply) {
-    while (*command == ' ') command++;   // skip leading spaces
-
-    if (strlen(command) > 4 && command[2] == '|') {  // optional prefix (for companion radio CLI)
-      memcpy(reply, command, 3);  // reflect the prefix back
-      reply += 3;
-      command += 3;
-    }
-
-    _cli.handleCommand(sender_timestamp, command, reply);  // common CLI commands
+  void handleSerialData() {
+    _cli.handleSerialData();
   }
 
   void loop() {
@@ -259,7 +262,6 @@ void halt() {
   while (1) ;
 }
 
-static char command[CMD_BUF_LEN_MAX];
 
 void setup() {
   Serial.begin(115200);
@@ -284,36 +286,11 @@ void setup() {
 #else
   #error "need to define filesystem"
 #endif
-
-  command[0] = 0;
-
   the_mesh.begin(fs);
 }
 
 void loop() {
-  int len = strlen(command);
-  while (Serial.available() && len < sizeof(command)-1) {
-    char c = Serial.read();
-    if (c != '\n') {
-      command[len++] = c;
-      command[len] = 0;
-    }
-    Serial.print(c);
-  }
-  if (len == sizeof(command)-1) {  // command buffer full
-    command[sizeof(command)-1] = '\r';
-  }
-
-  if (len > 0 && command[len - 1] == '\r') {  // received complete line
-    command[len - 1] = 0;  // replace newline with C string null terminator
-    char reply[160];
-    the_mesh.handleCommand(0, command, reply);  // NOTE: there is no sender_timestamp via serial!
-    if (reply[0]) {
-      Serial.print("  -> "); Serial.println(reply);
-    }
-
-    command[0] = 0;  // reset command buffer
-  }
-
+  if (Serial.available())
+    the_mesh.handleSerialData();
   the_mesh.loop();
 }
