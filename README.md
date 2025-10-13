@@ -1,6 +1,11 @@
 ## lorapipe
 
+[![experimental](http://badges.github.io/stability-badges/dist/experimental.svg)](http://github.com/badges/stability-badges)[![license](https://img.shields.io/github/license/datapartyjs/lorapipe)](https://github.com/datapartyjs/lorapipe/blob/master/license.txt)
+
 Lorapipe is a tool for piping LoRa data to and from consumer grade radios.
+
+ * Code - [github.com/datapartyjs/lorapipe](https://github.com/datapartyjs/lorapipe)
+ * Support - [ko-fi/dataparty](https://ko-fi.com/dataparty)
 
 ## Features
 
