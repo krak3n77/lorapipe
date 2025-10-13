@@ -90,6 +90,8 @@ Once connected the lorapipe device has a simple CLI. The CLI is largely similar 
 
 ## APRS over LoRa
 
+<img src="https://github.com/user-attachments/assets/ca4e8caf-5eff-44d3-8ff0-c9d57bfc6ca3" width="40%"></img> <img src="https://github.com/user-attachments/assets/aa4506dd-34b6-4277-af8e-3470ef8f8dfa" width="40%"></img> 
+
 You can use your favorite APRS tools with lorapipe. Simply select a frequency, place the radio into kiss mode and connect to your APRS tools as a KISS TNC device.
 
  * `minicom -D /dev/ttyACM0`
@@ -103,9 +105,12 @@ lorapipe should work with lots of APRS clients, we've tested on the following:
  * [xastir](https://xastir.org/index.php/Main_Page)
  * [APRSisce32](http://aprsisce.wikidot.com/)
 
-<img src="https://github.com/user-attachments/assets/ca4e8caf-5eff-44d3-8ff0-c9d57bfc6ca3" width="40%"></img> <img src="https://github.com/user-attachments/assets/aa4506dd-34b6-4277-af8e-3470ef8f8dfa" width="40%"></img> 
+
 
 ## Ethernet over LoRa
+
+<img src="https://github.com/user-attachments/assets/d8347c1c-d76d-469b-89d2-cd2c18859607" width="40%"></img>
+
 
 Run the following on two or more computers, each with a lorapipe device attached, to create an ethernet over LoRa network.
 
