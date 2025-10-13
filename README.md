@@ -24,7 +24,7 @@ We haven't built a flashing tool yet. You can flash builds using the OEM provide
 
 ## Hardware Compatibility
 
-lorapipe is designed for devices supported by MeshCore so check their support list in the [MeshCore Flasher](https://flasher.meshcore.co.uk). We support all the same hardware.
+lorapipe is designed for devices supported by MeshCore so check their support list in the [MeshCore Flasher](https://flasher.meshcore.co.uk). We support most of the same hardware see [variants](https://github.com/datapartyjs/lorapipe/tree/main/variants).
 
 ## Serial CLI
 
@@ -34,7 +34,7 @@ The lorapipe firmware initially starts up in a serial mode which is human readab
 
 Once connected the lorapipe device has a simple CLI. The CLI is largely similar to meshcore with a few notable additions.
 
-### LoRa pipe CLI additions
+### CLI additions
 
  * `txraw <hex...>` - Transmist a packet
  * `get syncword <word>` - Read the syncword setting
@@ -44,7 +44,8 @@ Once connected the lorapipe device has a simple CLI. The CLI is largely similar 
  * `rxlog on`
    * Output format: ` [timestamp],[type=RXLOG],[rssi],[snr],[hex...]\n` 
 
-### Existing Commands
+ <details>
+      <summary> Existing Commands</summary>
 
  * `reboot`
  * `clock sync`
@@ -80,3 +81,30 @@ Once connected the lorapipe device has a simple CLI. The CLI is largely similar 
  * `log stop`
  * `rxlog on`
  * `rxlog off`
+</details>
+
+### KISS Mode
+
+ * Open a serial console and connect to the lorapipe device
+ * `serial mode kiss`
+
+## Ethernet over LoRa
+
+Run the following on two or more computers, each with a lorapipe device attached, to create an ethernet over LoRa network.
+
+ * Install [`tncattach`](https://github.com/markqvist/tncattach)
+   * `git clone https://github.com/markqvist/tncattach.git`
+   * `cd tncattach`
+   * `make`
+   * `sudo make install`
+ * `minicom -D /dev/ttyACM0`
+   * `set radio 916.75,500.0,5,5,0x16`
+   * `serial mode kiss`
+
+### On the first machine
+
+ * `sudo tncattach --mtu=230 -e -noipv6 --ipv4=10.10.10.10/24 /dev/ttyACM0 115200`
+
+### On the second machine
+
+ * `sudo tncattach --mtu=230 -e -noipv6 --ipv4=10.10.10.11/24 /dev/ttyACM0 115200`
