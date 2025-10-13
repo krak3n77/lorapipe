@@ -5,7 +5,9 @@ Lorapipe is a tool for piping LoRa data to and from consumer grade radios.
 ## Features
 
  - Simple serial cli built into the firmware
- - KISS-TNC
+ - Transmit raw bytes (hex) over LoRA using serial CLI
+ - LoRA packet logging to serial (hex)
+ - KISS-TNC mode
 
 ## Compiling
 - Install [PlatformIO](https://docs.platformio.org) in [Visual Studio Code](https://code.visualstudio.com).
