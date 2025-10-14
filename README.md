@@ -5,6 +5,7 @@
 Lorapipe is a tool for piping LoRa data to and from consumer grade radios.
 
  * Code - [github.com/datapartyjs/lorapipe](https://github.com/datapartyjs/lorapipe)
+ * Releases - [github.com/datapartyjs/lorapipe/releases](https://github.com/datapartyjs/lorapipe/releases)
  * Support - [ko-fi/dataparty](https://ko-fi.com/dataparty)
 
 ## Features
@@ -22,9 +23,12 @@ Lorapipe is a tool for piping LoRa data to and from consumer grade radios.
 
 ## Flashing
 
-We haven't built a flashing tool yet. You can flash builds using the OEM provided flashing tools or using the developer instructions to flash using VS Code.
+Download precompiled firmware releases - [github.com/datapartyjs/lorapipe/releases](https://github.com/datapartyjs/lorapipe/releases)
+
+We haven't built a flashing tool yet. You can flash builds using the meshcore flasher, the OEM provided flashing tools or using the developer instructions to flash using VS Code.
 
 - Flash using your platform's OEM flashing tool
+- User the meshcore flasher - http://flasher.meshcore.co.uk/
 
 
 ## Hardware Compatibility
