@@ -16,6 +16,11 @@ runs:
       with:
         python-version: '3.11'
 
+    - name: Install IntelHex
+      shell: bash
+      run: |
+        pip install intelhex
+
     - name: Install PlatformIO
       shell: bash
       run: |
