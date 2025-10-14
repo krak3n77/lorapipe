@@ -28,7 +28,7 @@ Download precompiled firmware releases - [github.com/datapartyjs/lorapipe/releas
 We haven't built a flashing tool yet. You can flash builds using the meshcore flasher, the OEM provided flashing tools or using the developer instructions to flash using VS Code.
 
 - Flash using your platform's OEM flashing tool
-- User the meshcore flasher - http://flasher.meshcore.co.uk/
+- Use the meshcore flasher - http://flasher.meshcore.co.uk/
 
 
 ## Hardware Compatibility
