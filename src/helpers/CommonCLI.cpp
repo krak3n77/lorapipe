@@ -58,7 +58,7 @@ void CommonCLI::loadPrefsInt(FILESYSTEM* fs, const char* filename) {
     _prefs->airtime_factor = constrain(_prefs->airtime_factor, 0, 9.0f);
     _prefs->freq = constrain(_prefs->freq, 400.0f, 2500.0f);
     _prefs->bw = constrain(_prefs->bw, 62.5f, 500.0f);
-    _prefs->sf = constrain(_prefs->sf, 7, 12);
+    _prefs->sf = constrain(_prefs->sf, 5, 12);
     _prefs->cr = constrain(_prefs->cr, 5, 8);
     _prefs->tx_power_dbm = constrain(_prefs->tx_power_dbm, 1, 30);
     _prefs->kiss_port = constrain(_prefs->kiss_port, 0, 15);
@@ -317,7 +317,7 @@ void CommonCLI::handleCLICommand(
       uint8_t cr  = num > 3 ? atoi(parts[3]) : 0;
       uint8_t sync_word  = num > 4 ? strtol(parts[4], nullptr, 16) : 0;
       if (freq >= 300.0f && freq <= 2500.0f &&
-          sf >= 7 && sf <= 12 &&
+          sf >= 5 && sf <= 12 &&
           cr >= 5 && cr <= 8 &&
           bw >= 7.0f && bw <= 500.0f
       ){
@@ -479,6 +479,7 @@ void CommonCLI::parseSerialKISS() {
   }
 }
 
+// https://www.ax25.net/kiss.aspx
 void CommonCLI::handleKISSCommand(
   uint32_t sender_timestamp,
   const char* kiss_data,
@@ -504,7 +505,8 @@ void CommonCLI::handleKISSCommand(
         Serial.println("  -> Exiting KISS mode and returning to CLI mode.");
         break;
       case KISS_CMD_TXDELAY:
-        if (kiss_data_len > 0) _kiss_txdelay = atoi(&kiss_data[0]);
+        // TX delay is specified in 10ms units
+        if (kiss_data_len > 0) _kiss_txdelay = atoi(&kiss_data[0]) * 10;
         break;
       case KISS_CMD_DATA:
         if (kiss_data_len == 0) break;

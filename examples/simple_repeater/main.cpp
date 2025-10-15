@@ -97,15 +97,38 @@ protected:
       mesh::Utils::printHex(Serial, raw, len);
       Serial.println();
     } else if (cli_mode == CLIMode::KISS) {
-      uint16_t kiss_rx_len = len+3;
-      uint8_t kiss_rx[kiss_rx_len];  // create rx buffer with enough room to hold TFENDs and KISS commands
-      kiss_rx[0] = KISS_FEND; // begin response
-      uint8_t kiss_cmd = 0;
-      kiss_cmd = ((_prefs.kiss_port << 4) & KISS_MASK_PORT) |
-            (KISS_CMD_DATA & KISS_MASK_CMD); // set KISS port and DATA cmd
+      uint8_t kiss_rx[CMD_BUF_LEN_MAX];
+      // begin response
+      kiss_rx[0] = KISS_FEND;
+      // set KISS port and DATA cmd byte
+      uint8_t kiss_cmd =
+        ((_prefs.kiss_port << 4) & KISS_MASK_PORT) |
+        (KISS_CMD_DATA & KISS_MASK_CMD);
       kiss_rx[1] = kiss_cmd;
-      memcpy(&kiss_rx[2], raw, len); // copy RX data into response
-      kiss_rx[len-1] = KISS_FEND;    // end response
+      // start after FEND and KISS CMD byte
+      uint16_t kiss_rx_len = 2;
+      // escape bytes that need escaping
+      for (int i = 0; i < len; i++) {
+        if (kiss_rx_len + 2 >= sizeof(kiss_rx)-1) {
+          // handle buffer oversize, just truncate packet for now
+          // TODO: error handling?
+          break;
+        }
+        switch (raw[i]) {
+          case KISS_FEND:
+            kiss_rx[kiss_rx_len++] = KISS_FESC;
+            kiss_rx[kiss_rx_len++] = KISS_TFEND;
+            break;
+          case KISS_FESC:
+            kiss_rx[kiss_rx_len++] = KISS_FESC;
+            kiss_rx[kiss_rx_len++] = KISS_TFESC;
+            break;
+          default:
+            kiss_rx[kiss_rx_len++] = raw[i];
+            break;
+        }
+      }
+      kiss_rx[kiss_rx_len++] = KISS_FEND;    // end response
       Serial.write(kiss_rx, kiss_rx_len);
     }
   }
