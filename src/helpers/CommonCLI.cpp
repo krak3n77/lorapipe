@@ -51,6 +51,7 @@ void CommonCLI::loadPrefsInt(FILESYSTEM* fs, const char* filename) {
     file.read((uint8_t *) &_prefs->interference_threshold, sizeof(_prefs->interference_threshold));
     file.read((uint8_t *) &_prefs->sync_word, sizeof(_prefs->sync_word));
     file.read((uint8_t *) &_prefs->kiss_port, sizeof(_prefs->kiss_port));
+    file.read((uint8_t *) &_prefs->cli_mode, sizeof(_prefs->cli_mode));  
 
     // sanitise bad pref values
     _prefs->rx_delay_base = constrain(_prefs->rx_delay_base, 0, 20.0f);
@@ -62,6 +63,8 @@ void CommonCLI::loadPrefsInt(FILESYSTEM* fs, const char* filename) {
     _prefs->cr = constrain(_prefs->cr, 5, 8);
     _prefs->tx_power_dbm = constrain(_prefs->tx_power_dbm, 1, 30);
     _prefs->kiss_port = constrain(_prefs->kiss_port, 0, 15);
+    _prefs->cli_mode = constrain(_prefs->cli_mode, 0, 1);
+
 
     file.close();
   }
@@ -99,6 +102,7 @@ void CommonCLI::savePrefs(FILESYSTEM* fs) {
     file.write((uint8_t *) &_prefs->interference_threshold, sizeof(_prefs->interference_threshold));
     file.write((uint8_t *) &_prefs->sync_word, sizeof(_prefs->sync_word));
     file.write((uint8_t *) &_prefs->kiss_port, sizeof(_prefs->kiss_port));
+    file.write((uint8_t *) &_prefs->cli_mode, sizeof(_prefs->cli_mode));
 
     file.close();
   }
@@ -168,6 +172,8 @@ void CommonCLI::handleCLICommand(
       Serial.println("  -> Entering KISS mode!");
       _kiss_len = 0;  // reset kiss length
       _cli_mode = CLIMode::KISS;
+      _prefs->cli_mode = 1;  // Add this  
+      savePrefs();           // Add this  
       return;
     }
   } else if (memcmp(command, "txraw ", 6) == 0) {
@@ -502,6 +508,8 @@ void CommonCLI::handleKISSCommand(
       case KISS_CMD_RETURN:
         _cmd[0] = 0; // reset command buffer
         _cli_mode = CLIMode::CLI; // return to CLI mode
+        _prefs->cli_mode = 0;  // Add this  
+        savePrefs();           // Add this  
         Serial.println("  -> Exiting KISS mode and returning to CLI mode.");
         break;
       case KISS_CMD_TXDELAY:

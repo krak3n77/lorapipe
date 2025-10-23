@@ -52,6 +52,7 @@ struct NodePrefs {  // persisted to file
     bool log_rx;
     // KISS Config
     uint8_t kiss_port;
+    uint8_t cli_mode;
 };
 
 class CommonCLICallbacks {
@@ -97,6 +98,7 @@ public:
         _kiss_len = 0;
         _kiss_esc = false;
         _kiss_txdelay = 0;
+        _cli_mode = (CLIMode)_prefs->cli_mode;
       }
 
   void loadPrefs(FILESYSTEM* _fs);

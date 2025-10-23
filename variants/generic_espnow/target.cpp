@@ -20,7 +20,7 @@ uint32_t radio_get_rng_seed() {
   return millis() + radio_driver.intID();  // TODO: where to get some entropy?
 }
 
-void radio_set_params(float freq, float bw, uint8_t sf, uint8_t cr) {
+void radio_set_params(float freq, float bw, uint8_t sf, uint8_t cr, uint8_t syncWord) {  
   // no-op
 }
 
